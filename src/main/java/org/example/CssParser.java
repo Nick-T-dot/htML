@@ -3,7 +3,9 @@ package org.example;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
+import org.jsoup.select.Evaluator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -23,42 +25,46 @@ public class CssParser extends Parser {
         }
         return styles;
     }
-    public Map<String, String> getStylesFor(Tag tag, String css) {
+
+    private Map<String, String> getStylesForSelector(String selector, String css) {
         Map<String, String> styles = new HashMap<>();
-        String tagStr = tag.getName();
-        Pattern pattern = Pattern.compile(tagStr);
+        Pattern pattern = Pattern.compile(selector);
         Matcher matcher = pattern.matcher(css);
         int closingBracket;
         String foundStyle;
         while (matcher.find()) {
             closingBracket = getClosingBracketIndex(matcher.start(), css);
             foundStyle = css.substring(matcher.start(), closingBracket);
-            //System.out.println();
             styles.putAll(parseCssStyle(foundStyle));
         }
         return styles;
     }
+    public Map<String, String> getStylesFor(Tag tag, String css) {
+        String tagStr = tag.getName();
+        return getStylesForSelector(tagStr, css);
+    }
 
-    public Map<String, String> getStylesFor(Attribute attribute, String css) {
-        Map<String, String> styles = new HashMap<>();
-        return styles;
+    public Map<String, String> getStylesFor(Evaluator.Id id, String css) {
+        String idStr =  "#" + id.toString();
+        return getStylesForSelector(idStr, css);
     }
 
     public Map<String, String> getStylesFor(String htmlClass, String css) {
-        Map<String, String> styles = new HashMap<>();
         String tagStr = "\\." + htmlClass;
-        Pattern pattern = Pattern.compile(tagStr);
-        Matcher matcher = pattern.matcher(css);
-        int closingBracket;
-        while (matcher.find()) {
-            closingBracket = getClosingBracketIndex(matcher.start(), css);
-            System.out.println(css.substring(matcher.start(), closingBracket));
-        }
-        return styles;
+        return getStylesForSelector(tagStr, css);
     }
 
     public Map<String, String> getStylesFor(Element element, String css) {
         Map<String, String> styles = new HashMap<>();
+        styles.putAll(getStylesFor(element.tagName(), css));
+        element.classNames().forEach(className -> styles.putAll(getStylesFor(className, css)));
+        styles.putAll(getStylesFor(element.id(), css));
+        return styles;
+    }
+
+    public Map<String, String> getStylesFor(Element element, ArrayList<String> cssS) {
+        Map<String, String> styles = new HashMap<>();
+        cssS.forEach(css -> styles.putAll(getStylesFor(element, css)));
         return styles;
     }
 }

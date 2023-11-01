@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-
 class Control {
 
 }
@@ -53,7 +52,7 @@ public class Main {
                 Map<String, String> css = htmlParser.downloadCss(curUrl);
                 Map<String, String> js = htmlParser.downloadJavaScript(curUrl);
                 System.out.println(htmlParser.getFunctionByName(" hjahs window { ad{ ddd}d}vqvqv", "window"));
-                cssParser.getStylesFor(Tag.valueOf("user-profile-btn"), " acadfa .user-profile-btn { we:hate_you; lol:also; } qfqvqvqv .user-profile-btn {hecc:21;}gfg");
+                Map<String, String> styles = cssParser.getStylesFor(Tag.valueOf("user-profile-btn"), " acadfa .user-profile-btn { we:hate-you; lol:als_o; } qfqvqvqv .user-profile-btn {hecc:21;}gfg");
                 ArrayList<Element> buttons = htmlParser.getWithAttribute(doc, Attribute.createFromEncoded("onClick", ""));
                 buttons.forEach(System.out::println);
                 return;

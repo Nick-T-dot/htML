@@ -39,7 +39,6 @@ class HtmlParser extends Parser {
                 throw new RuntimeException(e);
             }
         }).collect(Collectors.toCollection(ArrayList::new));
-        int cssCount = cssLinks.size();
         ArrayList<String> cssNames = cssLinks.stream().map(link -> link.substring(link.lastIndexOf("/") + 1).split("\\?")[0]).collect(Collectors.toCollection(ArrayList::new));
         Map<String, String> css = new HashMap<>();
         IntStream.range(0, cssParts.size()).forEach(i -> css.put(cssNames.get(i), cssParts.get(i)));
