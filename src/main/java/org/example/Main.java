@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -87,6 +89,78 @@ class HtmlParser {
         return js;
     }
 
+    private int getClosingBracketIndex(int start, String doc) {
+        String findHere = doc.substring(start);
+        int bracketRatio = 1;
+        int curChar = findHere.indexOf("{") + 1;
+        while (bracketRatio != 0) {
+            if (findHere.charAt(curChar) == '{') {
+                bracketRatio++;
+            } else if (findHere.charAt(curChar) == '}') {
+                bracketRatio--;
+            }
+            curChar++;
+        }
+        return curChar + start;
+    }
+
+    // selector {
+    // style1: val1;
+    // style2: val2;
+    // }
+    private Map<String, String> parseCssStyle(String style) {
+        Pattern pattern = Pattern.compile("[\\w-]+:[\\w-]+;");
+        Matcher matcher = pattern.matcher(style);
+        Map<String, String> styles = new HashMap<>();
+        int colonIndex;
+        String fused;
+        while (matcher.find()) {
+            fused = style.substring(matcher.start(), matcher.end());
+            colonIndex = fused.indexOf(":");
+            styles.put(fused.substring(0, colonIndex), fused.substring(colonIndex + 1, fused.length() - 1));
+        }
+        return styles;
+    }
+
+    public Map<String, String> getStylesFor(Tag tag, String css) {
+        Map<String, String> styles = new HashMap<>();
+        String tagStr = tag.getName();
+        Pattern pattern = Pattern.compile(tagStr);
+        Matcher matcher = pattern.matcher(css);
+        int closingBracket;
+        String foundStyle;
+        while (matcher.find()) {
+            closingBracket = getClosingBracketIndex(matcher.start(), css);
+            foundStyle = css.substring(matcher.start(), closingBracket);
+            //System.out.println();
+            styles.putAll(parseCssStyle(foundStyle));
+        }
+        return styles;
+    }
+
+    public Map<String, String> getStylesFor(Attribute attribute, String css) {
+        Map<String, String> styles = new HashMap<>();
+        return styles;
+    }
+
+    public Map<String, String> getStylesFor(String htmlClass, String css) {
+        Map<String, String> styles = new HashMap<>();
+        String tagStr = "\\." + htmlClass;
+        Pattern pattern = Pattern.compile(tagStr);
+        Matcher matcher = pattern.matcher(css);
+        int closingBracket;
+        while (matcher.find()) {
+            closingBracket = getClosingBracketIndex(matcher.start(), css);
+            System.out.println(css.substring(matcher.start(), closingBracket));
+        }
+        return styles;
+    }
+
+    public Map<String, String> getStylesFor(Element element, String css) {
+        Map<String, String> styles = new HashMap<>();
+        return styles;
+    }
+
     public ArrayList<Element> getByTag(Document doc, Tag tag) {
         ArrayList<Element> found = new ArrayList<>();
         Stack<Element> toVisit = new Stack<>();
@@ -148,19 +222,9 @@ class HtmlParser {
     }
 
     public String getFunctionByName(String js, String name) {
-        String found = "";
         int startIndex = js.indexOf(name);
         String croppedJs = js.substring(startIndex);
-        int bracketRatio = 1;
-        int curChar = croppedJs.indexOf("{") + 1;
-        while (bracketRatio != 0) {
-            if (croppedJs.charAt(curChar) == '{') {
-                bracketRatio++;
-            } else if (croppedJs.charAt(curChar) == '}') {
-                bracketRatio--;
-            }
-            curChar++;
-        }
+        int curChar = getClosingBracketIndex(0, croppedJs);
         return croppedJs.substring(0, curChar);
     }
 
@@ -207,7 +271,8 @@ public class Main {
                 Document doc = htmlParser.downloadHtml(curUrl);
                 Map<String, String> css = htmlParser.downloadCss(curUrl);
                 Map<String, String> js = htmlParser.downloadJavaScript(curUrl);
-                //System.out.println(js);
+                System.out.println(htmlParser.getFunctionByName(" hjahs window { ad{ ddd}d}vqvqv", "window"));
+                htmlParser.getStylesFor(Tag.valueOf("user-profile-btn"), " acadfa .user-profile-btn { we:hate_you; lol:also; } qfqvqvqv .user-profile-btn {hecc:21;}gfg");
                 ArrayList<Element> buttons = htmlParser.getWithAttribute(doc, Attribute.createFromEncoded("onClick", ""));
                 buttons.forEach(System.out::println);
                 return;
