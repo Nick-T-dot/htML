@@ -40,6 +40,7 @@ public class Main {
     public static void main(String[] args){
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
+        JsParser jsParser = new JsParser();
         BrowserAgent browserAgent = new BrowserAgent("https://www.w3schools.com/");
         String curUrl;
         while (true) {
@@ -51,7 +52,7 @@ public class Main {
                 Document doc = htmlParser.downloadHtml(curUrl);
                 Map<String, String> css = htmlParser.downloadCss(curUrl);
                 Map<String, String> js = htmlParser.downloadJavaScript(curUrl);
-                System.out.println(htmlParser.getFunctionByName(" hjahs window { ad{ ddd}d}vqvqv", "window"));
+                System.out.println(jsParser.getFunctionByName(" hjahs window { ad{ ddd}d}vqvqv", "window"));
                 Map<String, String> styles = cssParser.getStylesFor(Tag.valueOf("user-profile-btn"), " acadfa .user-profile-btn { we:hate-you; lol:als_o; } qfqvqvqv .user-profile-btn {hecc:21;}gfg");
                 ArrayList<Element> buttons = htmlParser.getWithAttribute(doc, Attribute.createFromEncoded("onClick", ""));
                 buttons.forEach(System.out::println);

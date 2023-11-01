@@ -74,7 +74,6 @@ class HtmlParser extends Parser {
         return js;
     }
 
-
     public ArrayList<Element> getByTag(Document doc, Tag tag) {
         ArrayList<Element> found = new ArrayList<>();
         Stack<Element> toVisit = new Stack<>();
@@ -133,17 +132,6 @@ class HtmlParser extends Parser {
             }
         }
         return found;
-    }
-
-    public String getFunctionByName(String js, String name) {
-        int startIndex = js.indexOf(name);
-        String croppedJs = js.substring(startIndex);
-        int curChar = getClosingBracketIndex(0, croppedJs);
-        return croppedJs.substring(0, curChar);
-    }
-
-    public String getFunctionByName(ArrayList<String> jss, String name) {
-        return jss.stream().map(js -> getFunctionByName(js, name)).filter(str -> !str.isEmpty()).collect(Collectors.joining("\n"));
     }
 }
 
