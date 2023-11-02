@@ -21,7 +21,6 @@ public class ImageParser {
     }
     public Map<String, String> getImageFrom(Element element) {
         Map<String, String> imgs = new HashMap<>();
-
         return imgs;
     }
 }

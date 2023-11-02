@@ -12,30 +12,6 @@ class Control {
 
 }
 
-class BrowserAgent {
-    public WebDriver driver = new ChromeDriver();
-
-    public BrowserAgent() {
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-    }
-
-    public BrowserAgent(String defaultUrl) {
-        this();
-        driver.get(defaultUrl);
-    }
-
-    public void switchToActive(){
-        driver.switchTo().window(driver.getWindowHandle());
-    }
-    public String getCurPageUrl() {
-        return driver.getCurrentUrl();
-    }
-
-    public String getHandle() {
-        return driver.getWindowHandle();
-    }
-}
-
 public class Main {
     public static void main(String[] args){
         HtmlParser htmlParser = new HtmlParser();
@@ -49,9 +25,9 @@ public class Main {
                 browserAgent.switchToActive();
                 curUrl = browserAgent.getCurPageUrl();
                 System.out.println("You are browsing " + curUrl);
-                Document doc = htmlParser.downloadHtml(curUrl);
-                Map<String, String> css = htmlParser.downloadCss(curUrl);
-                Map<String, String> js = htmlParser.downloadJavaScript(curUrl);
+                Document doc = browserAgent.downloadHtml(curUrl);
+                Map<String, String> css = browserAgent.downloadCss(curUrl);
+                Map<String, String> js = browserAgent.downloadJavaScript(curUrl);
                 System.out.println(jsParser.getFunctionByName(" hjahs window { ad{ ddd}d}vqvqv", "window"));
                 Map<String, String> styles = cssParser.getStylesFor(Tag.valueOf("user-profile-btn"), " acadfa .user-profile-btn { we:hate-you; lol:als_o; } qfqvqvqv .user-profile-btn {hecc:21;}gfg");
                 ArrayList<Element> buttons = htmlParser.getWithAttribute(doc, Attribute.createFromEncoded("onClick", ""));

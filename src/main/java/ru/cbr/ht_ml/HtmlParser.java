@@ -17,61 +17,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class HtmlParser extends Parser {
+
     public Document parseHtml(String path) throws IOException {
         String content = Files.readString(Paths.get(path), Charset.defaultCharset());
         return Jsoup.parse(content);
-    }
-
-    public Document downloadHtml(String url) throws IOException {
-        String html = Jsoup.connect(url).get().html();
-        return Jsoup.parse(html);
-    }
-
-    public Map<String, String> downloadCss(String url) throws IOException {
-        String[] urlPieces = url.split("/");
-        String cssUrl = urlPieces[0] + "//" + urlPieces[2];
-        Element head = Jsoup.connect(url).get().head();
-        ArrayList<String> cssLinks = head.children().select("[rel=stylesheet]").stream().map(el -> el.attr("href")).collect(Collectors.toCollection(ArrayList::new));
-        ArrayList<String> cssParts = cssLinks.stream().map(css -> {
-            try {
-                return new String(new URL(cssUrl + css).openStream().readAllBytes());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toCollection(ArrayList::new));
-        ArrayList<String> cssNames = cssLinks.stream().map(link -> link.substring(link.lastIndexOf("/") + 1).split("\\?")[0]).collect(Collectors.toCollection(ArrayList::new));
-        Map<String, String> css = new HashMap<>();
-        IntStream.range(0, cssParts.size()).forEach(i -> css.put(cssNames.get(i), cssParts.get(i)));
-        return css;
-    }
-
-    public Map<String, String> downloadJavaScript(String url) throws IOException {
-        String[] urlPieces = url.split("/");
-        String jsUrl = urlPieces[0] + "//" + urlPieces[2];
-        Element head = Jsoup.connect(url).get().head();
-        ArrayList<Element> jsNodes = head.children().select("script");//.stream().map(el -> el.attr("href")).collect(Collectors.toCollection(ArrayList::new));
-        ArrayList<String> jsParts = new ArrayList<>();
-        ArrayList<String> jsLinks = jsNodes.stream().map(el -> el.attr("src")).filter(str -> str.startsWith("/")).collect(Collectors.toCollection(ArrayList::new));
-        jsParts.addAll(jsLinks.stream().map(js -> {
-            try {
-                return new String(new URL(jsUrl + js).openStream().readAllBytes());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toCollection(ArrayList::new)));
-        int cssCount = jsParts.size();
-        ArrayList<String> jsNames = jsLinks.stream().map(link -> link.substring(link.lastIndexOf("/") + 1).split("\\?")[0]).collect(Collectors.toCollection(ArrayList::new));
-        Map<String, String> js = new HashMap<>();
-        IntStream.range(0, cssCount).forEach(i -> js.put(jsNames.get(i), jsParts.get(i)));
-        jsParts.clear();
-        jsNodes.forEach(p -> {
-            if (!p.childNodes().isEmpty())
-                if(!p.childNode(0).outerHtml().isEmpty())
-                    jsParts.add(p.childNode(0).outerHtml());
-        });
-        cssCount = jsParts.size();
-        IntStream.range(0, cssCount).forEach(i -> js.put("unnamed_script_" + i + ".js", jsParts.get(i)));
-        return js;
     }
 
     public ArrayList<Element> getByTag(Document doc, Tag tag) {
