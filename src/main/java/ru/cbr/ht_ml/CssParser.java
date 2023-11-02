@@ -1,6 +1,5 @@
-package org.example;
+package ru.cbr.ht_ml;
 
-import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.jsoup.select.Evaluator;

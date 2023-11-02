@@ -1,4 +1,4 @@
-package org.example;
+package ru.cbr.ht_ml;
 
 public class Parser {
     protected int getClosingBracketIndex(int start, String doc) {

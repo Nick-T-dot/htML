@@ -1,4 +1,4 @@
-package org.example;
+package ru.cbr.ht_ml;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
