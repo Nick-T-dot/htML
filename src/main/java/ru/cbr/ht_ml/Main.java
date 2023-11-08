@@ -8,12 +8,9 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-class Control {
-
-}
-
 public class Main {
     public static void main(String[] args){
+        Classifier classifier = new Classifier();
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();
