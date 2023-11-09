@@ -91,9 +91,9 @@ public class Classifier {
 
     public void train(String path) {
         try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
-            tokenizer.tokenize(path);
+            String dataPath = tokenizer.outputTokenizedFile(path);
             recordReader.initialize(new FileSplit(
-                    new ClassPathResource("iris.txt").getFile()));
+                    new ClassPathResource(dataPath).getFile()));
             // todo Word2Vec + ConvNet
             long seed = '0';
             int featureCount = tokenizer.getFeatureCount();

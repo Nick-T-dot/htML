@@ -1,5 +1,6 @@
 package ru.cbr.ht_ml;
 
+import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
@@ -12,9 +13,12 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
-import java.io.File;
+import java.io.*;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Tokenizer {
     public static final String DEFAULT_MODEL_PATH = "\\models\\w2v.model";
@@ -57,6 +61,23 @@ public class Tokenizer {
             WordVectorSerializer.writeWord2VecModel(w2v, "\\models\\w2v.model");
         } catch (Exception e) {
             System.out.println(e.toString());
+        }
+    }
+
+    public String outputTokenizedFile(String pathToFile) {
+        String outFilePath = pathToFile + ".tokenized.csv";
+        try (BufferedReader reader = new BufferedReader(new FileReader(pathToFile));
+             FileWriter fw = new FileWriter(outFilePath)) {
+            String line = reader.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = reader.readLine();
+                fw.write(Stream.of(tokenize(line)).map(String::valueOf).collect(Collectors.joining()));
+            }
+            return outFilePath;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
