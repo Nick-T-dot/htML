@@ -5,6 +5,8 @@ import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
 import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
+import org.deeplearning4j.models.embeddings.WeightLookupTable;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -36,9 +38,11 @@ import org.deeplearning4j.zoo.ZooModel;
 import org.deeplearning4j.zoo.model.AlexNet;
 import org.deeplearning4j.zoo.model.ResNet50;
 import org.deeplearning4j.zoo.model.TextGenerationLSTM;
+import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -51,11 +55,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-
-import static org.deeplearning4j.zoo.model.helper.FaceNetHelper.conv5x5;
 
 class Control {
     // todo actual data
@@ -64,7 +67,13 @@ class Control {
 class Tokenizer {
 
     Logger log = Logger.getLogger("Tokenizer");
-    public String tokenize(String path) {
+    Word2Vec w2v;
+
+    public Tokenizer() {
+        w2v = null;
+        Word2Vec word2Vec = WordVectorSerializer.readWord2VecModel("\\models\\w2v.model");
+    }
+    public void train(String path) {
         try {
             log.info("Load data....");
             SentenceIterator iter = new LineSentenceIterator(new File(path));
@@ -77,7 +86,7 @@ class Tokenizer {
 
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
-            Word2Vec vec = new Word2Vec.Builder()
+            w2v = new Word2Vec.Builder()
                     .minWordFrequency(1)
                     .layerSize(100)
                     .seed(42)
@@ -87,19 +96,32 @@ class Tokenizer {
                     .build();
 
             log.info("Fitting Word2Vec model....");
-            vec.fit();
-            return "";
+            w2v.fit();
+            log.info("Save vectors....");
+            WordVectorSerializer.writeWord2VecModel(w2v, "\\models\\w2v.model");
         } catch (Exception e) {
             System.out.println(e.toString());
-            return  "ERR";
         }
+    }
+
+    public double[] tokenize(String data) {
+        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
+        WeightLookupTable weightLookupTable = w2v.lookupTable();
+        Iterator vectors = weightLookupTable.vectors();
+        INDArray wordVectorMatrix = w2v.getWordVectorMatrix(data);
+        double[] wordVector = w2v.getWordVector(data);
+        return wordVector;
+    }
+
+    public int getFeatureCount(){
+        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
+        return w2v.vectorSize();
     }
 }
 
 public class Classifier {
 
     private static final int CLASSES_COUNT = 11;
-    private static final int FEATURES_COUNT = 11;
 
     private static final int HEIGHT = 1;
     private static final int WIDTH = 1;
@@ -110,15 +132,16 @@ public class Classifier {
 
     private final Tokenizer tokenizer = new Tokenizer();
 
-    public Classifier() {
+    public void train(String path) {
         try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
             tokenizer.tokenize("C:\\Users\\Tsvetkov_NK\\Documents\\data.txt");
             recordReader.initialize(new FileSplit(
                     new ClassPathResource("iris.txt").getFile()));
             // todo Word2Vec + ConvNet
             long seed = '0';
+            int featureCount = tokenizer.getFeatureCount();
             DataSetIterator iterator = new RecordReaderDataSetIterator(
-                    recordReader, 150, FEATURES_COUNT, CLASSES_COUNT);
+                    recordReader, 150, featureCount, CLASSES_COUNT);
             DataSet allData = iterator.next();
             allData.shuffle(42);
 
@@ -139,7 +162,7 @@ public class Classifier {
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                     .updater(new Adam.Builder().learningRate(2e-2).build())
                     .list()
-                    .layer(0, convInit("cnn1", FEATURES_COUNT, 32 ,  new int[]{5, 5}, new int[]{1, 1}, new int[]{0, 0}, 0))
+                    .layer(0, convInit("cnn1", featureCount, 32 ,  new int[]{5, 5}, new int[]{1, 1}, new int[]{0, 0}, 0))
                     .layer(1, maxPool("maxpool1", new int[]{2,2}))
                     .layer(2, conv3x3("cnn2", 64, 0))
                     .layer(3, conv3x3("cnn3", 64,1))
@@ -150,7 +173,7 @@ public class Classifier {
                             .nOut(CLASSES_COUNT)
                             .activation(Activation.SOFTMAX)
                             .build())
-                    .setInputType(InputType.convolutional(HEIGHT, WIDTH, FEATURES_COUNT))
+                    .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
 
             MultiLayerNetwork model = new MultiLayerNetwork(conf);
@@ -159,6 +182,10 @@ public class Classifier {
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Classifier() {
+
     }
 
     public void train(MultiLayerNetwork model, DataSet dataSet) {
