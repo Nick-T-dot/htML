@@ -60,65 +60,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-class Control {
-    // todo actual data
-}
-
-class Tokenizer {
-
-    Logger log = Logger.getLogger("Tokenizer");
-    Word2Vec w2v;
-
-    public Tokenizer() {
-        w2v = null;
-        Word2Vec word2Vec = WordVectorSerializer.readWord2VecModel("\\models\\w2v.model");
-    }
-    public void train(String path) {
-        try {
-            log.info("Load data....");
-            SentenceIterator iter = new LineSentenceIterator(new File(path));
-            iter.setPreProcessor(new SentencePreProcessor() {
-                @Override
-                public String preProcess(String sentence) {
-                    return sentence.toLowerCase();
-                }
-            });
-
-            TokenizerFactory t = new DefaultTokenizerFactory();
-            t.setTokenPreProcessor(new CommonPreprocessor());
-            w2v = new Word2Vec.Builder()
-                    .minWordFrequency(1)
-                    .layerSize(100)
-                    .seed(42)
-                    .windowSize(5)
-                    .iterate(iter)
-                    .tokenizerFactory(t)
-                    .build();
-
-            log.info("Fitting Word2Vec model....");
-            w2v.fit();
-            log.info("Save vectors....");
-            WordVectorSerializer.writeWord2VecModel(w2v, "\\models\\w2v.model");
-        } catch (Exception e) {
-            System.out.println(e.toString());
-        }
-    }
-
-    public double[] tokenize(String data) {
-        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
-        WeightLookupTable weightLookupTable = w2v.lookupTable();
-        Iterator vectors = weightLookupTable.vectors();
-        INDArray wordVectorMatrix = w2v.getWordVectorMatrix(data);
-        double[] wordVector = w2v.getWordVector(data);
-        return wordVector;
-    }
-
-    public int getFeatureCount(){
-        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
-        return w2v.vectorSize();
-    }
-}
-
 public class Classifier {
 
     private static final int CLASSES_COUNT = 11;
@@ -127,14 +68,30 @@ public class Classifier {
     private static final int WIDTH = 1;
     private static  final int EPOCHS = 1000;
     private static final int BATCH_SIZE = 100;
+    public static final String DEFAULT_MODEL_PATH = "\\models\\cnn.model";
+
+    private MultiLayerNetwork model;
 
     Logger log = Logger.getLogger("Classifier");
 
-    private final Tokenizer tokenizer = new Tokenizer();
+    private final Tokenizer tokenizer;
+
+    public Classifier(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+        model = null;
+        File f = new File(DEFAULT_MODEL_PATH);
+        if(f.exists() && !f.isDirectory()) {
+            try {
+                model = MultiLayerNetwork.load(new File("..."), true);
+            } catch (IOException e) {
+                System.out.println("Unable to load " + DEFAULT_MODEL_PATH);
+            }
+        }
+    }
 
     public void train(String path) {
         try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
-            tokenizer.tokenize("C:\\Users\\Tsvetkov_NK\\Documents\\data.txt");
+            tokenizer.tokenize(path);
             recordReader.initialize(new FileSplit(
                     new ClassPathResource("iris.txt").getFile()));
             // todo Word2Vec + ConvNet
@@ -176,16 +133,12 @@ public class Classifier {
                     .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
 
-            MultiLayerNetwork model = new MultiLayerNetwork(conf);
+            model = new MultiLayerNetwork(conf);
             train(model, trainingData);
             model.evaluate(testData.iterator().next().iterateWithMiniBatches());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public Classifier() {
-
     }
 
     public void train(MultiLayerNetwork model, DataSet dataSet) {
