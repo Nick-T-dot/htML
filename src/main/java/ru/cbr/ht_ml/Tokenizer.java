@@ -10,12 +10,9 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
-import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,13 +44,13 @@ public class Tokenizer {
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
             w2v = new Word2Vec.Builder()
-                    .minWordFrequency(3)
+                    .minWordFrequency(1)
                     .layerSize(500)
                     .seed(42)
-                    .windowSize(10)
+                    .windowSize(50)
                     .iterate(iter)
                     .tokenizerFactory(t)
-                    .iterations(1)
+                    .iterations(10)
                     .epochs(100)
                     .build();
 
@@ -63,7 +60,7 @@ public class Tokenizer {
             File directory = new File("./");
             System.out.println(directory.getAbsolutePath());
 
-            WordVectorSerializer.writeWord2VecModel(w2v, ".\\models\\w2v.model");
+            WordVectorSerializer.writeWord2VecModel(w2v, DEFAULT_MODEL_PATH);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
@@ -85,7 +82,7 @@ public class Tokenizer {
     }
 
     public String outputTokenizedFile(String pathToFile) {
-        String outFilePath = pathToFile + ".tokenized.csv";
+        String outFilePath = pathToFile + ".tokenized." + pathToFile.split("\\.")[1];
         try (BufferedReader reader = new BufferedReader(new FileReader(pathToFile));
              FileWriter fw = new FileWriter(outFilePath)) {
             String line = reader.readLine();
@@ -96,17 +93,21 @@ public class Tokenizer {
             }
             return outFilePath;
         } catch (IOException e) {
-            e.printStackTrace();
+            log.info(e.toString());
             return null;
         }
     }
 
-    public double[] tokenize(String data) {
+    public ArrayList<double[]> tokenize(String data) {
+        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
+        ArrayList<double[]> dataVec = Arrays.stream(data.split(",")).sequential().map(this::tokenizeWord).collect(Collectors.toCollection(ArrayList::new));
+        return dataVec;
+    }
+
+    public double[] tokenizeWord(String word) {
         Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
         WeightLookupTable weightLookupTable = w2v.lookupTable();
-        Iterator vectors = weightLookupTable.vectors();
-        INDArray wordVectorMatrix = w2v.getWordVectorMatrix(data);
-        double[] wordVector = w2v.getWordVector(data);
+        double[] wordVector = w2v.getWordVector(word);
         return wordVector;
     }
 

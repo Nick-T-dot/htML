@@ -11,9 +11,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public class Main {
     public static void main(String[] args){
         Tokenizer tokenizer = new Tokenizer();
-        tokenizer.train("C:\\Users\\Tsvetkov_NK\\Documents\\shakespeare.txt");
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\BillionairesStatisticsDataset.csv";
+        //tokenizer.train(path);
         tokenizer.evaluate();
         Classifier classifier = new Classifier(tokenizer);
+        classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();
