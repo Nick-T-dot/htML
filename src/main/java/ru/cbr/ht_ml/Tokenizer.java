@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Tokenizer {
+public class Tokenizer { // todo doc2vec
     public static final String DEFAULT_MODEL_PATH = ".\\models\\w2v.model";
     Logger log = Logger.getLogger("Tokenizer");
     Word2Vec w2v;
