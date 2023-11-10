@@ -68,7 +68,7 @@ public class Classifier {
     private static final int WIDTH = 1;
     private static  final int EPOCHS = 1000;
     private static final int BATCH_SIZE = 100;
-    public static final String DEFAULT_MODEL_PATH = "\\models\\cnn.model";
+    public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
 
     private MultiLayerNetwork model;
 

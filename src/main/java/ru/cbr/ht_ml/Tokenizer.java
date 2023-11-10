@@ -1,6 +1,5 @@
 package ru.cbr.ht_ml;
 
-import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
@@ -14,6 +13,7 @@ import org.nd4j.common.io.Assert;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Tokenizer {
-    public static final String DEFAULT_MODEL_PATH = "\\models\\w2v.model";
+    public static final String DEFAULT_MODEL_PATH = ".\\models\\w2v.model";
     Logger log = Logger.getLogger("Tokenizer");
     Word2Vec w2v;
 
@@ -47,21 +47,41 @@ public class Tokenizer {
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
             w2v = new Word2Vec.Builder()
-                    .minWordFrequency(1)
-                    .layerSize(100)
+                    .minWordFrequency(3)
+                    .layerSize(500)
                     .seed(42)
-                    .windowSize(5)
+                    .windowSize(10)
                     .iterate(iter)
                     .tokenizerFactory(t)
+                    .iterations(1)
+                    .epochs(100)
                     .build();
 
             log.info("Fitting Word2Vec model....");
             w2v.fit();
             log.info("Save vectors....");
-            WordVectorSerializer.writeWord2VecModel(w2v, "\\models\\w2v.model");
+            File directory = new File("./");
+            System.out.println(directory.getAbsolutePath());
+
+            WordVectorSerializer.writeWord2VecModel(w2v, ".\\models\\w2v.model");
         } catch (Exception e) {
             System.out.println(e.toString());
         }
+    }
+
+    public void evaluate() {
+        List<String> words = List.of("man", "day", "deed", "land", "son");
+        evaluate(words);
+    }
+
+    public void evaluate(String word) {
+        System.out.println("Closest to " + word + ":");
+        Collection<String> lst = w2v.wordsNearest(word, 10);
+        System.out.println(lst);
+    }
+
+    public void evaluate(Collection<String> words) {
+        words.forEach(this::evaluate);
     }
 
     public String outputTokenizedFile(String pathToFile) {

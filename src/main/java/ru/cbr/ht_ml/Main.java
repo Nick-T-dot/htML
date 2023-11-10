@@ -10,7 +10,10 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
-        Classifier classifier = new Classifier();
+        Tokenizer tokenizer = new Tokenizer();
+        tokenizer.train("C:\\Users\\Tsvetkov_NK\\Documents\\shakespeare.txt");
+        tokenizer.evaluate();
+        Classifier classifier = new Classifier(tokenizer);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();
@@ -18,6 +21,7 @@ public class Main {
         String curUrl;
         while (true) {
             try {
+                assert(false);
                 TimeUnit.SECONDS.sleep(5);
                 browserAgent.switchToActive();
                 curUrl = browserAgent.getCurPageUrl();
