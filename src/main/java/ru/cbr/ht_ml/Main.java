@@ -10,12 +10,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
-        Tokenizer tokenizer = new Tokenizer();
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\BillionairesStatisticsDataset.csv";
-        //tokenizer.train(path);
+        D2VTokenizer tokenizer = new D2VTokenizer();
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
+        tokenizer.train(path);
         tokenizer.evaluate();
         Classifier classifier = new Classifier(tokenizer);
-        classifier.train(path);
+        //classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();

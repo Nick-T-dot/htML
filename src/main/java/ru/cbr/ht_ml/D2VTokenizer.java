@@ -2,10 +2,13 @@ package ru.cbr.ht_ml;
 
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor;
+import org.deeplearning4j.text.sentenceiterator.labelaware.LabelAwareFileSentenceIterator;
+import org.deeplearning4j.text.sentenceiterator.labelaware.LabelAwareSentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -17,23 +20,25 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Tokenizer { // todo doc2vec
-    public static final String DEFAULT_MODEL_PATH = ".\\models\\w2v.model";
+public class D2VTokenizer {
+    public static final String DEFAULT_MODEL_PATH = ".\\models\\d2v.model";
     Logger log = Logger.getLogger("Tokenizer");
-    Word2Vec w2v;
+    ParagraphVectors d2v;
 
-    public Tokenizer() {
-        w2v = null;
+    public D2VTokenizer() {
+        d2v = null;
         File f = new File(DEFAULT_MODEL_PATH);
-        if (f.exists() && !f.isDirectory()) {
-            w2v = WordVectorSerializer.readWord2VecModel(DEFAULT_MODEL_PATH);
+        try {
+            d2v = WordVectorSerializer.readParagraphVectors(DEFAULT_MODEL_PATH);
+        } catch (IOException e) {
+            System.out.println("No D2V model found in path " + DEFAULT_MODEL_PATH);
         }
     }
 
     public void train(String path) {
         try {
             log.info("Load data....");
-            SentenceIterator iter = new LineSentenceIterator(new File(path));
+            LabelAwareSentenceIterator iter = new LabelAwareFileSentenceIterator(new File(path));
             iter.setPreProcessor(new SentencePreProcessor() {
                 @Override
                 public String preProcess(String sentence) {
@@ -43,42 +48,29 @@ public class Tokenizer { // todo doc2vec
 
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
-            w2v = new Word2Vec.Builder()
-                    .minWordFrequency(1)
-                    .layerSize(500)
-                    .seed(42)
-                    .windowSize(50)
-                    .iterate(iter)
-                    .tokenizerFactory(t)
-                    .iterations(10)
-                    .epochs(100)
-                    .build();
+            d2v = new ParagraphVectors.Builder()
+                    .minWordFrequency(1).labels(Arrays.asList("negative", "positive"))
+                    .layerSize(100)
+                    .epochs(5)
+                    .iterations(2)
+                    .useAdaGrad(true)
+                    .stopWords(new ArrayList<String>())
+                    .windowSize(2).iterate(iter).tokenizerFactory(t).build();
 
             log.info("Fitting Word2Vec model....");
-            w2v.fit();
+            d2v.fit();
             log.info("Save vectors....");
             File directory = new File("./");
             System.out.println(directory.getAbsolutePath());
 
-            WordVectorSerializer.writeWord2VecModel(w2v, DEFAULT_MODEL_PATH);
+            WordVectorSerializer.writeWord2VecModel(d2v, DEFAULT_MODEL_PATH);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
 
     public void evaluate() {
-        List<String> words = List.of("man", "day", "deed", "land", "son");
-        evaluate(words);
-    }
-
-    public void evaluate(String word) {
-        System.out.println("Closest to " + word + ":");
-        Collection<String> lst = w2v.wordsNearest(word, 10);
-        System.out.println(lst);
-    }
-
-    public void evaluate(Collection<String> words) {
-        words.forEach(this::evaluate);
+        // todo
     }
 
     public String outputTokenizedFile(String pathToFile) {
@@ -99,20 +91,20 @@ public class Tokenizer { // todo doc2vec
     }
 
     public ArrayList<double[]> tokenize(String data) {
-        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
+        Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
         ArrayList<double[]> dataVec = Arrays.stream(data.split(",")).sequential().map(this::tokenizeWord).collect(Collectors.toCollection(ArrayList::new));
         return dataVec;
     }
 
     public double[] tokenizeWord(String word) {
-        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
-        WeightLookupTable weightLookupTable = w2v.lookupTable();
-        double[] wordVector = w2v.getWordVector(word);
+        Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
+        WeightLookupTable weightLookupTable = d2v.lookupTable();
+        double[] wordVector = d2v.getWordVector(word);
         return wordVector;
     }
 
     public int getFeatureCount() {
-        Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
-        return w2v.vectorSize();
+        Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
+        return d2v.vectorSize();
     }
 }
