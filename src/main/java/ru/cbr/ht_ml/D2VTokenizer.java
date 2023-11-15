@@ -50,13 +50,13 @@ public class D2VTokenizer extends Tokenizer {
             t.setTokenPreProcessor(new CommonPreprocessor());
             d2v = new ParagraphVectors.Builder()
                     .minWordFrequency(1).labels(Arrays.asList("negative", "positive"))
-                    .layerSize(100)
-                    //.learningRate(0.025)
+                    .layerSize(200)
+                    .learningRate(0.025)
                     .epochs(5)
                     .iterations(5)
                     .useAdaGrad(true)
                     .stopWords(new ArrayList<String>())
-                    .windowSize(50).iterate(iter).tokenizerFactory(t).build();
+                    .windowSize(7).iterate(iter).tokenizerFactory(t).build();
 
             log.info("Fitting Word2Vec model....");
             d2v.fit();

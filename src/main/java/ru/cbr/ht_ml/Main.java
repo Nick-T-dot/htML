@@ -10,11 +10,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
-        D2VTokenizer tokenizer = new D2VTokenizer();
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
-        tokenizer.train(path);
+        Tokenizer tokenizer = new W2VTokenizer();
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\shakespeare.txt";
+        //tokenizer.train(path);
         //tokenizer.evaluate();
-        double[] word = tokenizer.tokenizeWord("the film was great");
+        double[] word = tokenizer.tokenizeWord("day");
         Classifier classifier = new Classifier(tokenizer);
         classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
