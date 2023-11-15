@@ -3,6 +3,7 @@ package ru.cbr.ht_ml;
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
+import org.deeplearning4j.bagofwords.vectorizer.TfidfVectorizer;
 import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
@@ -24,6 +25,7 @@ import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.deeplearning4j.nn.transferlearning.TransferLearningHelper;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.text.sentenceiterator.FileSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor;
@@ -54,7 +56,9 @@ import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -91,15 +95,34 @@ public class Classifier {
 
     public void train(String path) {
         try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
-            String dataPath = tokenizer.outputTokenizedFile(path);
-            recordReader.initialize(new FileSplit(
-                    new ClassPathResource(dataPath).getFile()));
+            //String dataPath = tokenizer.outputTokenizedFile(path);
+            //recordReader.initialize(new FileSplit(
+            //        new ClassPathResource(dataPath).getFile()));
             // todo Word2Vec + ConvNet
             long seed = '0';
             int featureCount = tokenizer.getFeatureCount();
-            DataSetIterator iterator = new RecordReaderDataSetIterator(
-                    recordReader, 150, featureCount, CLASSES_COUNT);
-            DataSet allData = iterator.next();
+            //DataSetIterator iterator = new RecordReaderDataSetIterator(
+            //        recordReader, 150, featureCount, CLASSES_COUNT);
+            DataSet allData;// = iterator.next();
+            //allData.shuffle(42);
+
+            SentenceIterator iter = new FileSentenceIterator(new File(path)); // todo try other iterators
+            iter.setPreProcessor(new SentencePreProcessor() {
+                @Override
+                public String preProcess(String sentence) {
+                    return sentence.toLowerCase();
+                }
+            });
+
+            TokenizerFactory t = new DefaultTokenizerFactory();
+            t.setTokenPreProcessor(new CommonPreprocessor());
+            TfidfVectorizer tfidf = new TfidfVectorizer.Builder()
+                    .setMinWordFrequency(1)
+                    .allowParallelTokenization(true)
+                    .setIterator(iter)
+                    .setTokenizerFactory(t)
+                    .build();
+            allData = tfidf.vectorize();
             allData.shuffle(42);
 
             DataNormalization normalizer = new NormalizerStandardize();
@@ -136,7 +159,7 @@ public class Classifier {
             model = new MultiLayerNetwork(conf);
             train(model, trainingData);
             model.evaluate(testData.iterator().next().iterateWithMiniBatches());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {// | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

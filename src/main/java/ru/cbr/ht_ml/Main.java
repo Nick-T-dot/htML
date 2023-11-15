@@ -1,4 +1,5 @@
 package ru.cbr.ht_ml;
+import org.deeplearning4j.bagofwords.vectorizer.TfidfVectorizer;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,7 +15,7 @@ public class Main {
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\shakespeare.txt";
         //tokenizer.train(path);
         //tokenizer.evaluate();
-        double[] word = tokenizer.tokenizeWord("day");
+        //double[] word = tokenizer.tokenizeWord("day");
         Classifier classifier = new Classifier(tokenizer);
         classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
