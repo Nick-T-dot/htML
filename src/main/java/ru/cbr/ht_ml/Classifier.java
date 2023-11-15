@@ -74,9 +74,9 @@ public class Classifier {
 
     Logger log = Logger.getLogger("Classifier");
 
-    private final D2VTokenizer tokenizer;
+    private final Tokenizer tokenizer;
 
-    public Classifier(D2VTokenizer tokenizer) {
+    public Classifier(Tokenizer tokenizer) {
         this.tokenizer = tokenizer;
         model = null;
         File f = new File(DEFAULT_MODEL_PATH);

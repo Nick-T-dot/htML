@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class D2VTokenizer {
+public class D2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\d2v.model";
     Logger log = Logger.getLogger("Tokenizer");
     ParagraphVectors d2v;
@@ -51,11 +51,12 @@ public class D2VTokenizer {
             d2v = new ParagraphVectors.Builder()
                     .minWordFrequency(1).labels(Arrays.asList("negative", "positive"))
                     .layerSize(100)
+                    //.learningRate(0.025)
                     .epochs(5)
-                    .iterations(2)
+                    .iterations(5)
                     .useAdaGrad(true)
                     .stopWords(new ArrayList<String>())
-                    .windowSize(2).iterate(iter).tokenizerFactory(t).build();
+                    .windowSize(50).iterate(iter).tokenizerFactory(t).build();
 
             log.info("Fitting Word2Vec model....");
             d2v.fit();

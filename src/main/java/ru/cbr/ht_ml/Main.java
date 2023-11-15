@@ -13,9 +13,10 @@ public class Main {
         D2VTokenizer tokenizer = new D2VTokenizer();
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
         tokenizer.train(path);
-        tokenizer.evaluate();
+        //tokenizer.evaluate();
+        double[] word = tokenizer.tokenizeWord("the film was great");
         Classifier classifier = new Classifier(tokenizer);
-        //classifier.train(path);
+        classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();

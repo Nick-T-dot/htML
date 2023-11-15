@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class W2VTokenizer {
+public class W2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\w2v.model";
     Logger log = Logger.getLogger("Tokenizer");
     Word2Vec w2v;
