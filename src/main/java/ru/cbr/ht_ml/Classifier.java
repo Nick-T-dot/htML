@@ -122,6 +122,7 @@ public class Classifier {
                     .setIterator(iter)
                     .setTokenizerFactory(t)
                     .build();
+            tfidf.fit();
             allData = tfidf.vectorize();
             allData.shuffle(42);
 
