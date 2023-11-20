@@ -95,35 +95,16 @@ public class Classifier {
 
     public void train(String path) {
         try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
-            //String dataPath = tokenizer.outputTokenizedFile(path);
-            //recordReader.initialize(new FileSplit(
-            //        new ClassPathResource(dataPath).getFile()));
-            // todo Word2Vec + ConvNet
+            String dataPath = tokenizer.outputTokenizedFile(path);
+            recordReader.initialize(new FileSplit(
+                    new ClassPathResource(dataPath).getFile()));
             long seed = '0';
             int featureCount = tokenizer.getFeatureCount();
-            //DataSetIterator iterator = new RecordReaderDataSetIterator(
-            //        recordReader, 150, featureCount, CLASSES_COUNT);
-            DataSet allData;// = iterator.next();
+            DataSetIterator iterator = new RecordReaderDataSetIterator(
+                    recordReader, 150, featureCount, CLASSES_COUNT);
+            DataSet allData = iterator.next();
             //allData.shuffle(42);
 
-            SentenceIterator iter = new FileSentenceIterator(new File(path)); // todo try other iterators
-            iter.setPreProcessor(new SentencePreProcessor() {
-                @Override
-                public String preProcess(String sentence) {
-                    return sentence.toLowerCase();
-                }
-            });
-
-            TokenizerFactory t = new DefaultTokenizerFactory();
-            t.setTokenPreProcessor(new CommonPreprocessor());
-            TfidfVectorizer tfidf = new TfidfVectorizer.Builder()
-                    .setMinWordFrequency(1)
-                    .allowParallelTokenization(true)
-                    .setIterator(iter)
-                    .setTokenizerFactory(t)
-                    .build();
-            tfidf.fit();
-            allData = tfidf.vectorize();
             allData.shuffle(42);
 
             DataNormalization normalizer = new NormalizerStandardize();
@@ -160,7 +141,7 @@ public class Classifier {
             model = new MultiLayerNetwork(conf);
             train(model, trainingData);
             model.evaluate(testData.iterator().next().iterateWithMiniBatches());
-        } catch (IOException e) {// | InterruptedException e) {
+        } catch (IOException | InterruptedException e) {// | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

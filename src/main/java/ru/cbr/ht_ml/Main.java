@@ -6,18 +6,21 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
         Tokenizer tokenizer = new W2VTokenizer();
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\shakespeare.txt";
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\data";
         //tokenizer.train(path);
         //tokenizer.evaluate();
+        System.out.println(Arrays.toString(tokenizer.tokenizeWord("day of land")));
         //double[] word = tokenizer.tokenizeWord("day");
         Classifier classifier = new Classifier(tokenizer);
-        classifier.train(path);
+        //classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();

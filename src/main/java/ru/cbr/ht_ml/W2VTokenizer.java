@@ -3,9 +3,7 @@ package ru.cbr.ht_ml;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
-import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
-import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor;
+import org.deeplearning4j.text.sentenceiterator.*;
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -19,10 +17,12 @@ import java.util.stream.Stream;
 
 public class W2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\w2v.model";
+    int featureCount;
     Logger log = Logger.getLogger("Tokenizer");
     Word2Vec w2v;
 
     public W2VTokenizer() {
+        featureCount = 100;
         w2v = null;
         File f = new File(DEFAULT_MODEL_PATH);
         if (f.exists() && !f.isDirectory()) {
@@ -33,25 +33,37 @@ public class W2VTokenizer extends Tokenizer {
     public void train(String path) {
         try {
             log.info("Load data....");
-            SentenceIterator iter = new LineSentenceIterator(new File(path));
-            iter.setPreProcessor(new SentencePreProcessor() {
-                @Override
-                public String preProcess(String sentence) {
-                    return sentence.toLowerCase();
-                }
-            });
+            SentenceIterator iter = new FileSentenceIterator(new File(path));
+            //iter.setPreProcessor(new SentencePreProcessor() {
+            //    @Override
+            //    public String preProcess(String sentence) {
+            //        return sentence.toLowerCase();
+            //    }
+            //});
+
+            /**
+             * .minWordFrequency(1)
+             * .layerSize(100)
+             * .seed(42)
+             * .windowSize(10)
+             * .iterate(iter)
+             * .tokenizerFactory(t)
+             * .iterations(5)
+             * .epochs(100)
+             *  22:45 per epoch
+             */
 
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
             w2v = new Word2Vec.Builder()
                     .minWordFrequency(1)
-                    .layerSize(500)
+                    .layerSize(100)
                     .seed(42)
-                    .windowSize(50)
+                    .windowSize(10)
                     .iterate(iter)
                     .tokenizerFactory(t)
-                    .iterations(10)
-                    .epochs(100)
+                    .iterations(5)
+                    .epochs(2)
                     .build();
 
             log.info("Fitting Word2Vec model....");
@@ -59,7 +71,6 @@ public class W2VTokenizer extends Tokenizer {
             log.info("Save vectors....");
             File directory = new File("./");
             System.out.println(directory.getAbsolutePath());
-
             WordVectorSerializer.writeWord2VecModel(w2v, DEFAULT_MODEL_PATH);
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -109,6 +120,10 @@ public class W2VTokenizer extends Tokenizer {
         WeightLookupTable weightLookupTable = w2v.lookupTable();
         double[] wordVector = w2v.getWordVector(word);
         return wordVector;
+    }
+
+    public void setFeatureCount(int featureCount) {
+        this.featureCount = featureCount;
     }
 
     public int getFeatureCount() {
