@@ -13,9 +13,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
-        Tokenizer tokenizer = new W2VTokenizer();
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\data";
-        //tokenizer.train(path);
+        Tokenizer tokenizer = new D2VTokenizer();
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeled";
+        tokenizer.train(path);
         //tokenizer.evaluate();
         System.out.println(Arrays.toString(tokenizer.tokenizeWord("day of land")));
         //double[] word = tokenizer.tokenizeWord("day");

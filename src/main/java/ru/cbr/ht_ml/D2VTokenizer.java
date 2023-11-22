@@ -1,9 +1,14 @@
 package ru.cbr.ht_ml;
 
+import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
+import org.deeplearning4j.text.documentiterator.FileDocumentIterator;
+import org.deeplearning4j.text.documentiterator.FileLabelAwareIterator;
+import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
+import org.deeplearning4j.text.sentenceiterator.FileSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor;
@@ -13,6 +18,7 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
+import org.nd4j.common.io.ClassPathResource;
 
 import java.io.*;
 import java.util.*;
@@ -38,25 +44,33 @@ public class D2VTokenizer extends Tokenizer {
     public void train(String path) {
         try {
             log.info("Load data....");
-            LabelAwareSentenceIterator iter = new LabelAwareFileSentenceIterator(new File(path));
-            iter.setPreProcessor(new SentencePreProcessor() {
-                @Override
-                public String preProcess(String sentence) {
-                    return sentence.toLowerCase();
-                }
-            });
+            LabelAwareIterator iter = new FileLabelAwareIterator.Builder()
+                    .addSourceFolder(new File(path))
+                    .build();
+            //iter.setPreProcessor(new SentencePreProcessor() {
+            //    @Override
+            //    public String preProcess(String sentence) {
+            //        return sentence.toLowerCase();
+           //     }
+            //});
 
             TokenizerFactory t = new DefaultTokenizerFactory();
             t.setTokenPreProcessor(new CommonPreprocessor());
             d2v = new ParagraphVectors.Builder()
-                    .minWordFrequency(1).labels(Arrays.asList("negative", "positive"))
-                    .layerSize(200)
-                    .learningRate(0.025)
+                    .minWordFrequency(3)
+                    .layerSize(100)
+                    //.learningRate(0.025)
                     .epochs(5)
-                    .iterations(5)
+                    .iterations(1)
+                    .batchSize(1)
+                    .minLearningRate(0.001)
                     .useAdaGrad(true)
+                    .trainWordVectors(true)
                     .stopWords(new ArrayList<String>())
-                    .windowSize(7).iterate(iter).tokenizerFactory(t).build();
+                    .windowSize(10)
+                    .iterate(iter)
+                    .tokenizerFactory(t)
+                    .build();
 
             log.info("Fitting Word2Vec model....");
             d2v.fit();
