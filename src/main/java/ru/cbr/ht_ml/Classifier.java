@@ -4,7 +4,6 @@ import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
 import org.deeplearning4j.bagofwords.vectorizer.TfidfVectorizer;
-import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
@@ -42,7 +41,6 @@ import org.deeplearning4j.zoo.model.ResNet50;
 import org.deeplearning4j.zoo.model.TextGenerationLSTM;
 import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
-import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -114,10 +112,11 @@ public class Classifier {
             SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
             DataSet trainingData = testAndTrain.getTrain();
             DataSet testData = testAndTrain.getTest();
+
             MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                     .seed(seed)
                     //.iterations(iterations) todo why
-                    .regularization(List.of()).l2(0.005) // tried 0.0001, 0.0005
+                    .l2(0.005) // tried 0.0001, 0.0005
                     .activation(Activation.RELU)
                     //.learningRate(0.05) // not here
                     .weightInit(WeightInit.XAVIER)

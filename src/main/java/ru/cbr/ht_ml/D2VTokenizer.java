@@ -1,6 +1,5 @@
 package ru.cbr.ht_ml;
 
-import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
