@@ -1,8 +1,12 @@
 package ru.cbr.ht_ml;
 
+import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
+import org.deeplearning4j.models.sequencevectors.interfaces.VectorsListener;
+import org.deeplearning4j.models.sequencevectors.listeners.SerializingListener;
+import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.documentiterator.FileDocumentIterator;
 import org.deeplearning4j.text.documentiterator.FileLabelAwareIterator;
@@ -16,8 +20,13 @@ import org.deeplearning4j.text.sentenceiterator.labelaware.LabelAwareSentenceIte
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
+import org.deeplearning4j.ui.api.UIServer;
+import org.deeplearning4j.ui.model.stats.StatsListener;
+import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage;
+import org.nd4j.autodiff.listeners.impl.ScoreListener;
 import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.*;
 import java.util.*;
@@ -29,12 +38,15 @@ public class D2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\d2v.model";
     Logger log = Logger.getLogger("Tokenizer");
     ParagraphVectors d2v;
+    TokenizerFactory t;
 
     public D2VTokenizer() {
         d2v = null;
-        File f = new File(DEFAULT_MODEL_PATH);
+        t = new DefaultTokenizerFactory();
+        t.setTokenPreProcessor(new CommonPreprocessor());
         try {
             d2v = WordVectorSerializer.readParagraphVectors(DEFAULT_MODEL_PATH);
+            d2v.setTokenizerFactory(t);
         } catch (IOException e) {
             System.out.println("No D2V model found in path " + DEFAULT_MODEL_PATH);
         }
@@ -53,15 +65,13 @@ public class D2VTokenizer extends Tokenizer {
            //     }
             //});
 
-            TokenizerFactory t = new DefaultTokenizerFactory();
-            t.setTokenPreProcessor(new CommonPreprocessor());
             d2v = new ParagraphVectors.Builder()
-                    .minWordFrequency(3)
-                    .layerSize(100)
+                    .minWordFrequency(1)
+                    .layerSize(1000)
                     //.learningRate(0.025)
-                    .epochs(5)
+                    .epochs(1)
                     .iterations(1)
-                    .batchSize(1)
+                    //.batchSize(100)
                     .minLearningRate(0.001)
                     .useAdaGrad(true)
                     .trainWordVectors(true)
@@ -74,10 +84,8 @@ public class D2VTokenizer extends Tokenizer {
             log.info("Fitting Word2Vec model....");
             d2v.fit();
             log.info("Save vectors....");
-            File directory = new File("./");
-            System.out.println(directory.getAbsolutePath());
-
             WordVectorSerializer.writeWord2VecModel(d2v, DEFAULT_MODEL_PATH);
+            log.info("Model saved to " + DEFAULT_MODEL_PATH);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
@@ -110,9 +118,12 @@ public class D2VTokenizer extends Tokenizer {
         return dataVec;
     }
 
+    public INDArray tokenizeString(String s) {
+        return d2v.inferVector(s);
+    }
+
     public double[] tokenizeWord(String word) {
         Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
-        WeightLookupTable weightLookupTable = d2v.lookupTable();
         double[] wordVector = d2v.getWordVector(word);
         return wordVector;
     }

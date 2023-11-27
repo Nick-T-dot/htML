@@ -31,7 +31,6 @@
             <version>1.0.0-M1.1</version>
         </dependency>
         -->
-
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-datavec-iterators</artifactId>

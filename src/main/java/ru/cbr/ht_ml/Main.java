@@ -4,31 +4,42 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
+
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args){
         Tokenizer tokenizer = new D2VTokenizer();
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeled";
-        tokenizer.train(path);
-        //tokenizer.evaluate();
-        System.out.println(Arrays.toString(tokenizer.tokenizeWord("day of land")));
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
+        DatasetSeparator separator = new DatasetSeparator(path, "\\.");
+        //separator.separateFiles(true);
+        //tokenizer.train(path);
+        tokenizer.evaluate();
+        String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
+        System.out.println(tokens);
+        INDArray indArray = tokenizer.tokenizeString("improve the quality");
+        if (tokens.equals("null")) {
+            return;
+        }
         //double[] word = tokenizer.tokenizeWord("day");
-        Classifier classifier = new Classifier(tokenizer);
+        //Classifier classifier = new Classifier(tokenizer);
         //classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();
-        BrowserAgent browserAgent = new BrowserAgent("https://www.w3schools.com/");
+        BrowserAgent browserAgent;
         String curUrl;
         while (true) {
             try {
-                assert(false);
+                new File("0");
+                browserAgent = new BrowserAgent("https://www.w3schools.com/");
                 TimeUnit.SECONDS.sleep(5);
                 browserAgent.switchToActive();
                 curUrl = browserAgent.getCurPageUrl();

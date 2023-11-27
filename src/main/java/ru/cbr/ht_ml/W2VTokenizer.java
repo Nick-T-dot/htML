@@ -8,6 +8,7 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.*;
 import java.util.*;
@@ -120,6 +121,11 @@ public class W2VTokenizer extends Tokenizer {
         WeightLookupTable weightLookupTable = w2v.lookupTable();
         double[] wordVector = w2v.getWordVector(word);
         return wordVector;
+    }
+
+    @Override
+    public INDArray tokenizeString(String s) {
+        return null;
     }
 
     public void setFeatureCount(int featureCount) {

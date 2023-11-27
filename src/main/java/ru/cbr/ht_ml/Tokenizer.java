@@ -10,6 +10,7 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreproc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public abstract class Tokenizer {
     public abstract ArrayList<double[]> tokenize(String data);
 
     public abstract double[] tokenizeWord(String word);
+
+    public abstract INDArray tokenizeString(String s);
 
     public abstract int getFeatureCount();
 }
