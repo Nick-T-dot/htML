@@ -23,10 +23,10 @@ public class LabelManager {
         labels = new ArrayList<>(new HashSet<>(labels).stream().toList());
     }
 
-    public double[] getLabelIndexes(List<String> stringLabels) {
+    public double[][] getLabelIndexes(List<String> stringLabels) {
         IntStream.range(0, labels.size()).forEach(i -> core.put(labels.get(i), (double) i));
         ArrayList<Double> indexes = stringLabels.stream().map(l -> core.get(l)).collect(Collectors.toCollection(ArrayList::new));
-        return indexes.stream().mapToDouble(Double::doubleValue)
-                .toArray();
+        return new double[][]{indexes.stream().mapToDouble(Double::doubleValue)
+                .toArray()};
     }
 }
