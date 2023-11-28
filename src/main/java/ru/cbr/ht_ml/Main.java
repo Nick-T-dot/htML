@@ -15,7 +15,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         Tokenizer tokenizer = new D2VTokenizer();
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");

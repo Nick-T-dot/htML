@@ -1,5 +1,6 @@
 package ru.cbr.ht_ml;
 
+import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
@@ -11,6 +12,7 @@ import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.documentiterator.FileDocumentIterator;
 import org.deeplearning4j.text.documentiterator.FileLabelAwareIterator;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
+import org.deeplearning4j.text.documentiterator.LabelledDocument;
 import org.deeplearning4j.text.sentenceiterator.FileSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
@@ -27,6 +29,8 @@ import org.nd4j.autodiff.listeners.impl.ScoreListener;
 import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
 import java.util.*;
@@ -39,8 +43,10 @@ public class D2VTokenizer extends Tokenizer {
     Logger log = Logger.getLogger("Tokenizer");
     ParagraphVectors d2v;
     TokenizerFactory t;
+    LabelManager labelManager;
 
     public D2VTokenizer() {
+        this.labelManager = new LabelManager();
         d2v = null;
         t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
@@ -126,6 +132,26 @@ public class D2VTokenizer extends Tokenizer {
         Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
         double[] wordVector = d2v.getWordVector(word);
         return wordVector;
+    }
+
+    @Override
+    public DataSet tokenizeDataset(String path) {
+        File datasetDir = new File(path);
+        LabelAwareIterator iter = new FileLabelAwareIterator.Builder()
+                .addSourceFolder(datasetDir)
+                .build();
+        ArrayList<String> nonUniqueLabels = Arrays.stream(datasetDir.listFiles()).map(File::getName).collect(Collectors.toCollection(ArrayList::new));
+        nonUniqueLabels.forEach(s -> labelManager.tryAddLabels(s));
+        LabelledDocument doc;
+        INDArray data = Nd4j.create(new double[][]{});
+        INDArray labels = Nd4j.create(new double[][]{});
+        while (iter.hasNext()) {
+            doc = iter.nextDocument();
+            data.add(tokenizeString(doc.getContent()));
+            labels.add(Nd4j.create(labelManager.getLabelIndexes(doc.getLabels())));
+        }
+        DataSet dataSet = new DataSet(data, labels);
+        return dataSet;
     }
 
     public int getFeatureCount() {

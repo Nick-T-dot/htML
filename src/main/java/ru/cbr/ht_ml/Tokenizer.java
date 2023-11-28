@@ -11,6 +11,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ public abstract class Tokenizer {
     public abstract double[] tokenizeWord(String word);
 
     public abstract INDArray tokenizeString(String s);
+
+    public abstract DataSet tokenizeDataset(String path);
 
     public abstract int getFeatureCount();
 }

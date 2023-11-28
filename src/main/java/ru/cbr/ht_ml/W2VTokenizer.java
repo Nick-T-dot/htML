@@ -9,6 +9,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 
 import java.io.*;
 import java.util.*;
@@ -125,6 +126,11 @@ public class W2VTokenizer extends Tokenizer {
 
     @Override
     public INDArray tokenizeString(String s) {
+        return null;
+    }
+
+    @Override
+    public DataSet tokenizeDataset(String path) {
         return null;
     }
 
