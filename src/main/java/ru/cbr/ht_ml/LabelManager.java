@@ -24,7 +24,7 @@ public class LabelManager {
     }
 
     public double[] getLabelIndexes(List<String> stringLabels) {
-        IntStream.range(0, labels.size() - 1).forEach(i -> core.put(labels.get(i), (double) i));
+        IntStream.range(0, labels.size()).forEach(i -> core.put(labels.get(i), (double) i));
         ArrayList<Double> indexes = stringLabels.stream().map(l -> core.get(l)).collect(Collectors.toCollection(ArrayList::new));
         return indexes.stream().mapToDouble(Double::doubleValue)
                 .toArray();

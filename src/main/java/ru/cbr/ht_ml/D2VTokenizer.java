@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 
 public class D2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\d2v.model";
+    public static final int FEATURE_COUNT = 1000;
     Logger log = Logger.getLogger("Tokenizer");
     ParagraphVectors d2v;
     TokenizerFactory t;
@@ -73,7 +74,7 @@ public class D2VTokenizer extends Tokenizer {
 
             d2v = new ParagraphVectors.Builder()
                     .minWordFrequency(1)
-                    .layerSize(1000)
+                    .layerSize(FEATURE_COUNT)
                     //.learningRate(0.025)
                     .epochs(1)
                     .iterations(1)
@@ -143,14 +144,17 @@ public class D2VTokenizer extends Tokenizer {
         ArrayList<String> nonUniqueLabels = Arrays.stream(datasetDir.listFiles()).map(File::getName).collect(Collectors.toCollection(ArrayList::new));
         nonUniqueLabels.forEach(s -> labelManager.tryAddLabels(s));
         LabelledDocument doc;
-        INDArray data = Nd4j.create(new double[][]{});
-        INDArray labels = Nd4j.create(new double[][]{});
+        INDArray data;
+        INDArray labels;
+        List<DataSet> dataSets = new ArrayList<>();
         while (iter.hasNext()) {
             doc = iter.nextDocument();
-            data.add(tokenizeString(doc.getContent()));
-            labels.add(Nd4j.create(labelManager.getLabelIndexes(doc.getLabels())));
+            //data = data.addRowVector(tokenizeString(doc.getContent()));
+            dataSets.add(new DataSet(tokenizeString(doc.getContent()), Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()))));
+            //data = tokenizeString(doc.getContent());
+            //labels = Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()));
         }
-        DataSet dataSet = new DataSet(data, labels);
+        DataSet dataSet = DataSet.merge(dataSets);
         return dataSet;
     }
 

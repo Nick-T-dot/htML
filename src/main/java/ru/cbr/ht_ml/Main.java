@@ -22,6 +22,7 @@ public class Main {
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
+        tokenizer.tokenizeDataset(path);
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
         System.out.println(tokens);
         INDArray indArray = tokenizer.tokenizeString("improve the quality");
