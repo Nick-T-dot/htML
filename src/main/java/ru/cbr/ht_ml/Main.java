@@ -16,23 +16,25 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        Tokenizer tokenizer = new D2VTokenizer();
+        Tokenizer tokenizer = new D2VTokenizer(1000);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
         path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledc";
-        tokenizer.tokenizeDataset(path);
+        //tokenizer.tokenizeDataset(path);
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
-        System.out.println(tokens);
         INDArray indArray = tokenizer.tokenizeString("improve the quality");
+        //double[] word = tokenizer.tokenizeWord("day");
+        Classifier classifier = new Classifier(tokenizer);
+        //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
+        classifier.setDataSet(path);
+        classifier.train();
+        classifier.test();
         if (tokens.equals("null")) {
             return;
         }
-        //double[] word = tokenizer.tokenizeWord("day");
-        //Classifier classifier = new Classifier(tokenizer);
-        //classifier.train(path);
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();

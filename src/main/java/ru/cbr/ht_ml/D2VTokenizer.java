@@ -40,13 +40,14 @@ import java.util.stream.Stream;
 
 public class D2VTokenizer extends Tokenizer {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\d2v.model";
-    public static final int FEATURE_COUNT = 1000;
+    public final int featureCount;
     Logger log = Logger.getLogger("Tokenizer");
     ParagraphVectors d2v;
     TokenizerFactory t;
     LabelManager labelManager;
 
-    public D2VTokenizer() {
+    public D2VTokenizer(int featureCount) {
+        this.featureCount = featureCount;
         this.labelManager = new LabelManager();
         d2v = null;
         t = new DefaultTokenizerFactory();
@@ -74,7 +75,7 @@ public class D2VTokenizer extends Tokenizer {
 
             d2v = new ParagraphVectors.Builder()
                     .minWordFrequency(1)
-                    .layerSize(FEATURE_COUNT)
+                    .layerSize(featureCount)
                     //.learningRate(0.025)
                     .epochs(1)
                     .iterations(1)
@@ -160,6 +161,6 @@ public class D2VTokenizer extends Tokenizer {
 
     public int getFeatureCount() {
         Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
-        return d2v.vectorSize();
+        return featureCount;
     }
 }

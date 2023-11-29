@@ -73,6 +73,8 @@ public class Classifier {
     public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
 
     private MultiLayerNetwork model;
+    private DataSet trainSet;
+    private DataSet testSet;
 
     Logger log = Logger.getLogger("Classifier");
 
@@ -91,30 +93,26 @@ public class Classifier {
         }
     }
 
-    public void train(String path) {
-        try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
-            String dataPath = tokenizer.outputTokenizedFile(path);
-            recordReader.initialize(new FileSplit(
-                    new ClassPathResource(dataPath).getFile()));
-            long seed = '0';
+    public void setDataSet(String path) {
+        DataSet allData = tokenizer.tokenizeDataset(path);
+
+        allData.shuffle(42);
+
+        DataNormalization normalizer = new NormalizerStandardize();
+        normalizer.fit(allData);
+        normalizer.transform(allData);
+
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
+        trainSet = testAndTrain.getTrain();
+        testSet = testAndTrain.getTest();
+    }
+
+    public void train() {
+        try {
+            Assert.notNull(trainSet, "No dataset specified");
             int featureCount = tokenizer.getFeatureCount();
-            DataSetIterator iterator = new RecordReaderDataSetIterator(
-                    recordReader, 150, featureCount, CLASSES_COUNT);
-            DataSet allData = iterator.next();
-            //allData.shuffle(42);
-
-            allData.shuffle(42);
-
-            DataNormalization normalizer = new NormalizerStandardize();
-            normalizer.fit(allData);
-            normalizer.transform(allData);
-
-            SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
-            DataSet trainingData = testAndTrain.getTrain();
-            DataSet testData = testAndTrain.getTest();
-
             MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                    .seed(seed)
+                    .seed(0)
                     //.iterations(iterations) todo why
                     .l2(0.005) // tried 0.0001, 0.0005
                     .activation(Activation.RELU)
@@ -138,18 +136,28 @@ public class Classifier {
                     .build();
 
             model = new MultiLayerNetwork(conf);
-            train(model, trainingData);
-            model.evaluate(testData.iterator().next().iterateWithMiniBatches());
-        } catch (IOException | InterruptedException e) {// | InterruptedException e) {
+            train(model, trainSet);
+        } catch (Exception e) {// | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void train(MultiLayerNetwork model, DataSet dataSet) {
-        model.init();
+    private void train(MultiLayerNetwork net, DataSet dataSet) {
+        net.init();
         IntStream.range(1, EPOCHS + 1).forEach(epoch -> {
-            model.fit(dataSet.sample(BATCH_SIZE));
+            //model.fit(dataSet.sample(BATCH_SIZE));
+            net.fit(dataSet);
         });
+    }
+
+    public void test() {
+        Assert.notNull(testSet, "No dataset specified");
+        Assert.notNull(model, "Model not initialized");
+        test(model, testSet);
+    }
+
+    private void test(MultiLayerNetwork model, DataSet dataSet) {
+        model.evaluate(dataSet.iterateWithMiniBatches());
     }
     private ConvolutionLayer convInit(String name, int in, int out, int[] kernel, int[] stride, int[] pad, double bias) {
         return new ConvolutionLayer.Builder(kernel, stride, pad).name(name).nIn(in).nOut(out).biasInit(bias).build();
