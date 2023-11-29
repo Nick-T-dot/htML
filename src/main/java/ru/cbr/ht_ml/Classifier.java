@@ -4,6 +4,7 @@ import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
 import org.deeplearning4j.bagofwords.vectorizer.TfidfVectorizer;
+import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
@@ -33,6 +34,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.BertWordPieceTokeni
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.deeplearning4j.ui.model.stats.StatsListener;
+import org.deeplearning4j.ui.model.storage.FileStatsStorage;
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
 import org.deeplearning4j.zoo.ZooModel;
@@ -72,7 +74,7 @@ public class Classifier {
     private static final int BATCH_SIZE = 100;
     public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
 
-    private MultiLayerNetwork model;
+    private ComputationGraph model;
     private DataSet trainSet;
     private DataSet testSet;
 
@@ -86,7 +88,7 @@ public class Classifier {
         File f = new File(DEFAULT_MODEL_PATH);
         if(f.exists() && !f.isDirectory()) {
             try {
-                model = MultiLayerNetwork.load(new File("..."), true);
+                model = ComputationGraph.load(new File("..."), true);
             } catch (IOException e) {
                 System.out.println("Unable to load " + DEFAULT_MODEL_PATH);
             }
@@ -111,6 +113,7 @@ public class Classifier {
         try {
             Assert.notNull(trainSet, "No dataset specified");
             int featureCount = tokenizer.getFeatureCount();
+            /**
             MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                     .seed(0)
                     //.iterations(iterations) todo why
@@ -121,7 +124,7 @@ public class Classifier {
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                     .updater(new Adam.Builder().learningRate(2e-2).build())
                     .list()
-                    .layer(0, convInit("cnn1", featureCount, 32 ,  new int[]{5, 5}, new int[]{1, 1}, new int[]{0, 0}, 0))
+                    .layer(0, convInit("cnn1", featureCount, 64 ,  new int[]{5, 5}, new int[]{1, 1}, new int[]{0, 0}, 0))
                     .layer(1, maxPool("maxpool1", new int[]{2,2}))
                     .layer(2, conv3x3("cnn2", 64, 0))
                     .layer(3, conv3x3("cnn3", 64,1))
@@ -134,20 +137,33 @@ public class Classifier {
                             .build())
                     .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
+            **/
+            model = (ComputationGraph) new ZooModelManager(featureCount, CLASSES_COUNT).getVGG16();
+            UIServer uiServer = UIServer.getInstance();
 
-            model = new MultiLayerNetwork(conf);
+            //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
+            //Then add the StatsListener to collect this information from the network, as it trains
+            StatsStorage statsStorage = new FileStatsStorage(new File(System.getProperty("java.io.tmpdir"), "ui-stats.dl4j"));
+            int listenerFrequency = 1;
+            model.setListeners(new StatsListener(statsStorage, listenerFrequency));
+
+            //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
+            uiServer.attach(statsStorage);
             train(model, trainSet);
         } catch (Exception e) {// | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void train(MultiLayerNetwork net, DataSet dataSet) {
+    private void train(ComputationGraph net, DataSet dataSet) throws IOException {
         net.init();
         IntStream.range(1, EPOCHS + 1).forEach(epoch -> {
             //model.fit(dataSet.sample(BATCH_SIZE));
             net.fit(dataSet);
         });
+        log.info("Saving model...");
+        model.save(new File(DEFAULT_MODEL_PATH));
+        log.info("Model saved to " + DEFAULT_MODEL_PATH);
     }
 
     public void test() {
@@ -156,7 +172,7 @@ public class Classifier {
         test(model, testSet);
     }
 
-    private void test(MultiLayerNetwork model, DataSet dataSet) {
+    private void test(ComputationGraph model, DataSet dataSet) {
         model.evaluate(dataSet.iterateWithMiniBatches());
     }
     private ConvolutionLayer convInit(String name, int in, int out, int[] kernel, int[] stride, int[] pad, double bias) {
