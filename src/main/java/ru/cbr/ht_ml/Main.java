@@ -17,14 +17,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        INDArray mat = D2VTokenizer.vectorToDiagonalMatrix(new NDArray(new double[][] {{1,2,3,4}}));
         Tokenizer tokenizer = new D2VTokenizer(1000);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
-        path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledc";
+        path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         //tokenizer.tokenizeDataset(path);
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
         INDArray indArray = tokenizer.tokenizeString("improve the quality");

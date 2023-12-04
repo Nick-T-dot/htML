@@ -99,11 +99,7 @@ public class Classifier {
     public void setDataSet(String path) {
         DataSet allData = tokenizer.tokenizeDataset(path);
 
-        //allData.shuffle(42);
-
-        DataNormalization normalizer = new NormalizerStandardize();
-        normalizer.fit(allData);
-        normalizer.transform(allData);
+        allData.shuffle(42);
 
         SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
         trainSet = testAndTrain.getTrain();
@@ -139,8 +135,11 @@ public class Classifier {
                     .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
             **/
-            model = (ComputationGraph) new ZooModelManager(new int[]{3,
-                    tokenizer.getFeatureCount(), tokenizer.getFeatureCount()}, CLASSES_COUNT).getResNet50();
+            model = (ComputationGraph) new ZooModelManager(new int[]{
+                    3,
+                    tokenizer.getFeatureCount(),
+                    tokenizer.getFeatureCount()
+            }, CLASSES_COUNT).getResNet50();
             UIServer uiServer = UIServer.getInstance();
 
             //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
@@ -160,10 +159,11 @@ public class Classifier {
     private void train(ComputationGraph net, DataSet dataSet) throws IOException {
         net.init();
         log.info("Training...");
-        IntStream.range(1, EPOCHS + 1).forEach(epoch -> {
-            //model.fit(dataSet.sample(BATCH_SIZE));
-            net.fit(dataSet);
-        });
+        List<DataSet> batches;
+        for (int i = 1; i < EPOCHS + 1; i++) {
+            batches = dataSet.dataSetBatches(10);
+            batches.forEach(net::fit);
+        }
         log.info("Saving model...");
         model.save(new File(DEFAULT_MODEL_PATH));
         log.info("Model saved to " + DEFAULT_MODEL_PATH);

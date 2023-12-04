@@ -34,6 +34,8 @@ import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
+import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
@@ -160,16 +162,19 @@ public class D2VTokenizer extends Tokenizer {
             //labels = Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()));
             labels = labelManager.getLabelIndexes(doc.getLabels());
             dataSets.add(new DataSet(
-                    vectorToDiagonalMatrix(tokenizeString(doc.getContent())),
+                    vectorToDiagonalMatrix(tokenizeString(doc.getContent())).reshape(1, 3, featureCount, featureCount),
                     //tokenizeString(doc.getContent()),
                     new NDArray(labels)
         ));
         }
         DataSet dataSet = DataSet.merge(dataSets);
+        //DataNormalization normalizer = new NormalizerStandardize();
+        //normalizer.fit(dataSet);
+        //normalizer.transform(dataSet);
         return dataSet;
     }
 
-    public static INDArray vectorToDiagonalMatrix(INDArray array) {
+    public INDArray vectorToDiagonalMatrix(INDArray array) {
         INDArray matrix = new NDArray(new int[] { (int) array.length(), (int) array.length()});
         IntStream.range(0, (int) array.length()).forEach(
                 i -> matrix.putScalar(new int[]{i,i},

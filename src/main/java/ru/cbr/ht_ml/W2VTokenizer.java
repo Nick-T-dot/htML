@@ -9,12 +9,14 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.common.io.Assert;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 
 import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class W2VTokenizer extends Tokenizer {
@@ -131,6 +133,10 @@ public class W2VTokenizer extends Tokenizer {
 
     @Override
     public DataSet tokenizeDataset(String path) {
+        return null;
+    }
+
+    public INDArray vectorToDiagonalMatrix(INDArray array) {
         return null;
     }
 

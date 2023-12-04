@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class LabelManager {
-    Map<String, Double> core;
+    Map<String, Integer> core;
     ArrayList<String> labels;
 
     public LabelManager() {
@@ -24,9 +24,9 @@ public class LabelManager {
     }
 
     public double[][] getLabelIndexes(List<String> stringLabels) {
-        IntStream.range(0, labels.size()).forEach(i -> core.put(labels.get(i), (double) i));
-        ArrayList<Double> indexes = stringLabels.stream().map(l -> core.get(l)).collect(Collectors.toCollection(ArrayList::new));
-        return new double[][]{indexes.stream().mapToDouble(Double::doubleValue)
-                .toArray()};
+        IntStream.range(0, labels.size()).forEach(i -> core.put(labels.get(i), i));
+        double[][] labelIndexes = new double[1][labels.size()];
+        stringLabels.forEach(l -> labelIndexes[0][core.get(l)] = 1.);
+        return labelIndexes;
     }
 }
