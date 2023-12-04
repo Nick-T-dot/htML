@@ -11,11 +11,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
+        INDArray mat = D2VTokenizer.vectorToDiagonalMatrix(new NDArray(new double[][] {{1,2,3,4}}));
         Tokenizer tokenizer = new D2VTokenizer(1000);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");

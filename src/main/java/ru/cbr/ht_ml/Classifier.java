@@ -45,6 +45,7 @@ import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -98,7 +99,7 @@ public class Classifier {
     public void setDataSet(String path) {
         DataSet allData = tokenizer.tokenizeDataset(path);
 
-        allData.shuffle(42);
+        //allData.shuffle(42);
 
         DataNormalization normalizer = new NormalizerStandardize();
         normalizer.fit(allData);
@@ -138,7 +139,8 @@ public class Classifier {
                     .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
             **/
-            model = (ComputationGraph) new ZooModelManager(featureCount, CLASSES_COUNT).getVGG16();
+            model = (ComputationGraph) new ZooModelManager(new int[]{3,
+                    tokenizer.getFeatureCount(), tokenizer.getFeatureCount()}, CLASSES_COUNT).getResNet50();
             UIServer uiServer = UIServer.getInstance();
 
             //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
@@ -150,13 +152,14 @@ public class Classifier {
             //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
             uiServer.attach(statsStorage);
             train(model, trainSet);
-        } catch (Exception e) {// | InterruptedException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     private void train(ComputationGraph net, DataSet dataSet) throws IOException {
         net.init();
+        log.info("Training...");
         IntStream.range(1, EPOCHS + 1).forEach(epoch -> {
             //model.fit(dataSet.sample(BATCH_SIZE));
             net.fit(dataSet);
@@ -175,16 +178,4 @@ public class Classifier {
     private void test(ComputationGraph model, DataSet dataSet) {
         model.evaluate(dataSet.iterateWithMiniBatches());
     }
-    private ConvolutionLayer convInit(String name, int in, int out, int[] kernel, int[] stride, int[] pad, double bias) {
-        return new ConvolutionLayer.Builder(kernel, stride, pad).name(name).nIn(in).nOut(out).biasInit(bias).build();
-    }
-
-    private ConvolutionLayer conv3x3(String name, int out, double bias) {
-        return new ConvolutionLayer.Builder(new int[]{3,3}, new int[] {1,1}, new int[] {1,1}).name(name).nOut(out).biasInit(bias).build();
-    }
-
-    private SubsamplingLayer maxPool(String name, int[] kernel) {
-        return new SubsamplingLayer.Builder(kernel, new int[]{2,2}).name(name).build();
-    }
-
 }

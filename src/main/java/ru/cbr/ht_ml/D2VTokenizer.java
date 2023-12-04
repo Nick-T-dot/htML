@@ -2,6 +2,8 @@ package ru.cbr.ht_ml;
 
 import org.bytedeco.opencv.presets.opencv_core;
 import org.deeplearning4j.core.storage.StatsStorage;
+import org.deeplearning4j.datasets.iterator.impl.EmnistDataSetIterator;
+import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
@@ -25,10 +27,12 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.ui.model.stats.StatsListener;
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage;
+import org.eclipse.deeplearning4j.resources.utils.EMnistSet;
 import org.nd4j.autodiff.listeners.impl.ScoreListener;
 import org.nd4j.common.io.Assert;
 import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.nativecpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -36,6 +40,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class D2VTokenizer extends Tokenizer {
@@ -145,18 +150,36 @@ public class D2VTokenizer extends Tokenizer {
         ArrayList<String> nonUniqueLabels = Arrays.stream(datasetDir.listFiles()).map(File::getName).collect(Collectors.toCollection(ArrayList::new));
         nonUniqueLabels.forEach(s -> labelManager.tryAddLabels(s));
         LabelledDocument doc;
-        INDArray data;
-        INDArray labels;
+        double[][] labels;
         List<DataSet> dataSets = new ArrayList<>();
         while (iter.hasNext()) {
             doc = iter.nextDocument();
             //data = data.addRowVector(tokenizeString(doc.getContent()));
-            dataSets.add(new DataSet(tokenizeString(doc.getContent()), Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()))));
+            //dataSets.add(new DataSet(tokenizeString(doc.getContent()), Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()))));
             //data = tokenizeString(doc.getContent());
             //labels = Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()));
+            labels = labelManager.getLabelIndexes(doc.getLabels());
+            dataSets.add(new DataSet(
+                    vectorToDiagonalMatrix(tokenizeString(doc.getContent())),
+                    //tokenizeString(doc.getContent()),
+                    new NDArray(labels)
+        ));
         }
         DataSet dataSet = DataSet.merge(dataSets);
         return dataSet;
+    }
+
+    public static INDArray vectorToDiagonalMatrix(INDArray array) {
+        INDArray matrix = new NDArray(new int[] { (int) array.length(), (int) array.length()});
+        IntStream.range(0, (int) array.length()).forEach(
+                i -> matrix.putScalar(new int[]{i,i},
+                        array.getDouble(i))
+        );
+        INDArray fatMatrix = new NDArray(new int[] { 3, (int) array.length(), (int) array.length()});
+        IntStream.range(0, 3).forEach(
+                i -> fatMatrix.putSlice(i, matrix)
+        );
+        return fatMatrix;
     }
 
     public int getFeatureCount() {

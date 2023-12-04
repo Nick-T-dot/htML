@@ -16,20 +16,36 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.learning.config.IUpdater;
 import org.nd4j.weightinit.impl.ZeroInitScheme;
+import ru.cbr.ht_ml.models.FlatResNet50;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class ZooModelManager {
-    private final int inputSize;
+    private final int[] inputSize;
     private final int outputSize;
-    public ZooModelManager(int inputSize, int outputSize) {
+    public ZooModelManager(int[] inputSize, int outputSize) {
         this.inputSize = inputSize;
         this.outputSize = outputSize;
     }
 
+    public ZooModelManager(long[] inputSize, int outputSize) {
+        this.inputSize = Arrays.stream(inputSize).mapToInt(l -> (int) l).toArray();
+        this.outputSize = outputSize;
+    }
+
+    public Model getFlatResNet50(){
+        return FlatResNet50.builder()
+                //.inputShape(inputSize)
+                .cacheMode(CacheMode.HOST)
+                .numClasses(outputSize)
+                .updater(new Adam(0.01))
+                .build().init();
+    }
+
     public Model getResNet50() {
         return ResNet50.builder()
-                .inputShape(new int[]{inputSize})
+                .inputShape(inputSize)
                 .cacheMode(CacheMode.HOST)
                 .numClasses(outputSize)
                 .updater(new Adam(0.01))
@@ -39,7 +55,7 @@ public class ZooModelManager {
 
     public Model getUNet() {
         return UNet.builder()
-                .inputShape(new int[]{inputSize})
+                .inputShape(inputSize)
                 .cacheMode(CacheMode.HOST)
                 .numClasses(outputSize)
                 .updater(new Adam(0.01))
@@ -48,12 +64,13 @@ public class ZooModelManager {
     }
 
     public Model getVGG16() throws IOException {
-        return VGG16.builder()
-                //.inputShape(new int[]{1, inputSize})
+        ZooModel zooModel =  VGG16.builder()
+                //.inputShape(new int[]{1, 1, 1, inputSize})
                 .cacheMode(CacheMode.HOST)
                 .numClasses(outputSize)
                 .updater(new Adam(0.01))
                 //.weightInit(???)
-                .build().initPretrained(PretrainedType.IMAGENET);
+                .build();
+        return zooModel.init();
     }
 }
