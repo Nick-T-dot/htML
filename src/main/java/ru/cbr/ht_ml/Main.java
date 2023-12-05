@@ -17,21 +17,18 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        Tokenizer tokenizer = new D2VTokenizer(1000);
+        Tokenizer tokenizer = new D2VTokenizer(3072);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
         path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
-        //tokenizer.tokenizeDataset(path);
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
-        INDArray indArray = tokenizer.tokenizeString("improve the quality");
-        //double[] word = tokenizer.tokenizeWord("day");
         Classifier classifier = new Classifier(tokenizer);
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
-        path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
-        classifier.loadDataSet();
+        //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
+        classifier.setDataSet(path);
         classifier.train();
         classifier.test();
         if (tokens.equals("null")) {

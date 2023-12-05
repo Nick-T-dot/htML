@@ -154,14 +154,14 @@ public class D2VTokenizer extends Tokenizer {
         LabelledDocument doc;
         double[][] labels;
         List<DataSet> dataSets = new ArrayList<>();
-        DataSet tempDataSet;
-        DataSet dataSet = new DataSet();
+        DataSet dataSet;
         int rowNum = 0;
+        int side = (int) Math.sqrt(featureCount / 3.);
         while (iter.hasNext()) {
             doc = iter.nextDocument();
             labels = labelManager.getLabelIndexes(doc.getLabels());
             dataSets.add(new DataSet(
-                    vectorToDiagonalMatrix(tokenizeString(doc.getContent())).reshape(1, 3, featureCount, featureCount),
+                    vectorTo3dMatrix(tokenizeString(doc.getContent())).reshape(1, 3, side, side),
                     new NDArray(labels)
             ));
             if (dataSets.size() > 1000) {
@@ -172,6 +172,7 @@ public class D2VTokenizer extends Tokenizer {
         }
         if (dataSets.size() > 1) {
             dataSet = DataSet.merge(dataSets);
+            dataSet.save(new File(".\\datasets\\part" + String.valueOf(rowNum) + ".ds"));
         } else {
             dataSet = dataSets.get(0);
         }
@@ -191,6 +192,42 @@ public class D2VTokenizer extends Tokenizer {
         IntStream.range(0, 3).forEach(
                 i -> fatMatrix.putSlice(i, matrix)
         );
+        return fatMatrix;
+    }
+
+    public INDArray vectorToMatrix(INDArray array) {
+        double dside = Math.sqrt(array.length());
+        Assert.isTrue((dside - Math.round(dside)) == 0, "Array length is not a square.");
+        int side = (int) dside;
+        INDArray matrix = new NDArray(new int[] { side, side });
+        for (int i = 0; i < side; i++) {
+            for (int j = 0; j < side; j++) {
+                matrix.putScalar(new int[]{i, i%2==0 ? i : side - i - 1}, array.getDouble(i * side + j));
+            }
+        }
+        INDArray fatMatrix = new NDArray(new int[] { 3, side, side });
+        IntStream.range(0, 3).forEach(
+                i -> fatMatrix.putSlice(i, matrix)
+        );
+        return fatMatrix;
+    }
+
+    public INDArray vectorTo3dMatrix(INDArray array) {
+        Assert.isTrue(array.length() % 3 == 0, "Array length is not a multiple of 3!");
+        double dside = Math.sqrt(array.length() / 3.);
+        Assert.isTrue((dside - Math.round(dside)) == 0, "Array length is not a square!");
+        int side = (int) dside;
+        INDArray matrix;
+        INDArray fatMatrix = new NDArray(new int[] { 3, side, side });
+        for (int d = 0; d < 3; d++) {
+            matrix = new NDArray(new int[] { side, side });
+            for (int h = 0; h < side; h++) {
+                for (int w = 0; w < side; w++) {
+                    matrix.putScalar(new int[]{d % 2 == 0 ? h : side - h - 1, h % 2 == 0 ? w : side - w - 1}, array.getDouble(d * side * side + h * side + w));
+                }
+            }
+            fatMatrix.putSlice(d, matrix);
+        }
         return fatMatrix;
     }
 

@@ -102,7 +102,7 @@ public class Classifier {
 
     public void setDataSet(String path, String outputPath) {
         DataSet allData = tokenizer.tokenizeDataset(path);
-        allData.save(new File(outputPath));
+        //allData.save(new File(outputPath));
         classesCount = tokenizer.getLabelCount();
         trainTestSplit(allData);
     }
@@ -142,7 +142,7 @@ public class Classifier {
     public void train() {
         try {
             Assert.notNull(trainSet, "No dataset specified");
-            int featureCount = tokenizer.getFeatureCount();
+            int featureCount = (int) Math.sqrt(tokenizer.getFeatureCount() / 3.);
             /**
             MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                     .seed(0)
@@ -170,8 +170,8 @@ public class Classifier {
             **/
             model = (ComputationGraph) new ZooModelManager(new int[]{
                     3,
-                    tokenizer.getFeatureCount(),
-                    tokenizer.getFeatureCount()
+                    featureCount,
+                    featureCount
             }, classesCount).getResNet50();
             UIServer uiServer = UIServer.getInstance();
 
