@@ -148,4 +148,10 @@ public class W2VTokenizer extends Tokenizer {
         Assert.notNull(w2v, "No model found. Use fit() or put w2v.model in models folder.");
         return w2v.vectorSize();
     }
+    public int getLabelCount() {
+        return 0;
+    }
+    public int getLabelCount(INDArray array) {
+        return 0;
+    }
 }

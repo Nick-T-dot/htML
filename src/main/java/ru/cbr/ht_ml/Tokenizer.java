@@ -39,4 +39,7 @@ public abstract class Tokenizer {
     public abstract int getFeatureCount();
 
     public abstract INDArray vectorToDiagonalMatrix(INDArray array);
+
+    public abstract int getLabelCount();
+    public abstract int getLabelCount(INDArray array);
 }

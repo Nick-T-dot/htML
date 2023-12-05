@@ -30,7 +30,8 @@ public class Main {
         //double[] word = tokenizer.tokenizeWord("day");
         Classifier classifier = new Classifier(tokenizer);
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
-        classifier.setDataSet(path);
+        path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
+        classifier.loadDataSet();
         classifier.train();
         classifier.test();
         if (tokens.equals("null")) {

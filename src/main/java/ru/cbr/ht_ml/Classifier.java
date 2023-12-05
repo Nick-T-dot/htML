@@ -60,6 +60,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -67,17 +69,15 @@ import java.util.stream.IntStream;
 
 public class Classifier {
 
-    private static final int CLASSES_COUNT = 11;
-
-    private static final int HEIGHT = 1;
-    private static final int WIDTH = 1;
     private static  final int EPOCHS = 1000;
     private static final int BATCH_SIZE = 100;
     public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
+    public static final String DEFAULT_DATASET_PATH = ".\\datasets\\latest.ds";
 
     private ComputationGraph model;
     private DataSet trainSet;
     private DataSet testSet;
+    private int classesCount;
 
     Logger log = Logger.getLogger("Classifier");
 
@@ -97,15 +97,48 @@ public class Classifier {
     }
 
     public void setDataSet(String path) {
+        setDataSet(path, DEFAULT_DATASET_PATH);
+    }
+
+    public void setDataSet(String path, String outputPath) {
         DataSet allData = tokenizer.tokenizeDataset(path);
+        allData.save(new File(outputPath));
+        classesCount = tokenizer.getLabelCount();
+        trainTestSplit(allData);
+    }
 
+    public void loadDataSet() {
+        loadDataSet(DEFAULT_DATASET_PATH);
+    }
+
+    public void loadDataSet(String path) {
+        DataSet allData = new DataSet();
+        allData.load(new File(path));
+        classesCount = tokenizer.getLabelCount(allData.getLabels());
+        trainTestSplit(allData);
+    }
+
+    public void loadDataSets(String folderPath) {
+        List<DataSet> dataSets = new ArrayList<>();
+        File dir = new File(folderPath);
+        Assert.isTrue(dir.isDirectory(), folderPath + " is not a directory!");
+        Arrays.stream(dir.listFiles()).sequential().forEach(file -> {
+            dataSets.add(new DataSet());
+            log.info("Loading " + file.getName());
+            dataSets.get(dataSets.size() - 1).load(file);
+        });
+        DataSet allData = DataSet.merge(dataSets);
+        classesCount = tokenizer.getLabelCount(allData.getLabels());
+        trainTestSplit(allData);
+    }
+
+    private void trainTestSplit(DataSet data) {
+        DataSet allData = data.copy();
         allData.shuffle(42);
-
         SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
         trainSet = testAndTrain.getTrain();
         testSet = testAndTrain.getTest();
     }
-
     public void train() {
         try {
             Assert.notNull(trainSet, "No dataset specified");
@@ -139,7 +172,7 @@ public class Classifier {
                     3,
                     tokenizer.getFeatureCount(),
                     tokenizer.getFeatureCount()
-            }, CLASSES_COUNT).getResNet50();
+            }, classesCount).getResNet50();
             UIServer uiServer = UIServer.getInstance();
 
             //Configure where the network information (gradients, activations, score vs. time etc) is to be stored

@@ -29,4 +29,8 @@ public class LabelManager {
         stringLabels.forEach(l -> labelIndexes[0][core.get(l)] = 1.);
         return labelIndexes;
     }
+
+    public int getLabelCount() {
+        return labels.size();
+    }
 }

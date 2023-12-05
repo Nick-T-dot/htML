@@ -154,20 +154,27 @@ public class D2VTokenizer extends Tokenizer {
         LabelledDocument doc;
         double[][] labels;
         List<DataSet> dataSets = new ArrayList<>();
+        DataSet tempDataSet;
+        DataSet dataSet = new DataSet();
+        int rowNum = 0;
         while (iter.hasNext()) {
             doc = iter.nextDocument();
-            //data = data.addRowVector(tokenizeString(doc.getContent()));
-            //dataSets.add(new DataSet(tokenizeString(doc.getContent()), Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()))));
-            //data = tokenizeString(doc.getContent());
-            //labels = Nd4j.create(labelManager.getLabelIndexes(doc.getLabels()));
             labels = labelManager.getLabelIndexes(doc.getLabels());
             dataSets.add(new DataSet(
                     vectorToDiagonalMatrix(tokenizeString(doc.getContent())).reshape(1, 3, featureCount, featureCount),
-                    //tokenizeString(doc.getContent()),
                     new NDArray(labels)
-        ));
+            ));
+            if (dataSets.size() > 1000) {
+                DataSet.merge(dataSets).save(new File(".\\datasets\\part" + String.valueOf(rowNum++) + ".ds"));
+                dataSets.clear();
+                log.info("Saved " + (rowNum - 1));
+            }
         }
-        DataSet dataSet = DataSet.merge(dataSets);
+        if (dataSets.size() > 1) {
+            dataSet = DataSet.merge(dataSets);
+        } else {
+            dataSet = dataSets.get(0);
+        }
         //DataNormalization normalizer = new NormalizerStandardize();
         //normalizer.fit(dataSet);
         //normalizer.transform(dataSet);
@@ -190,5 +197,12 @@ public class D2VTokenizer extends Tokenizer {
     public int getFeatureCount() {
         Assert.notNull(d2v, "No model found. Use fit() or put w2v.model in models folder.");
         return featureCount;
+    }
+
+    public int getLabelCount() {
+        return labelManager.getLabelCount();
+    }
+    public int getLabelCount(INDArray array) {
+        return (int) array.getRow(0).length();
     }
 }
