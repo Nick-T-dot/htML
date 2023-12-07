@@ -55,6 +55,7 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.deeplearning4j.ui.api.UIServer;
 import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.opencv.core.Core;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -79,12 +80,25 @@ public class Classifier {
     private DataSet testSet;
     private int classesCount;
 
+    private ZooModelManager modelManager;
+
+    public enum CoreModel {RESNET50, UNET}
+
+    private CoreModel selectedCoreModel;
+
     Logger log = Logger.getLogger("Classifier");
 
     private final Tokenizer tokenizer;
 
     public Classifier(Tokenizer tokenizer) {
+        selectedCoreModel = CoreModel.RESNET50;
         this.tokenizer = tokenizer;
+        int featureCount = (int) Math.sqrt(tokenizer.getFeatureCount() / 3.);
+        new ZooModelManager(new int[]{
+                3,
+                featureCount,
+                featureCount
+        }, classesCount);
         model = null;
         File f = new File(DEFAULT_MODEL_PATH);
         if(f.exists() && !f.isDirectory()) {
@@ -101,10 +115,12 @@ public class Classifier {
     }
 
     public void setDataSet(String path, String outputPath) {
+        log.info("Tokenizing dataset...");
         DataSet allData = tokenizer.tokenizeDataset(path);
-        //allData.save(new File(outputPath));
+        allData.save(new File(outputPath));
         classesCount = tokenizer.getLabelCount();
         trainTestSplit(allData);
+        log.info("Dataset done.");
     }
 
     public void loadDataSet() {
@@ -142,7 +158,6 @@ public class Classifier {
     public void train() {
         try {
             Assert.notNull(trainSet, "No dataset specified");
-            int featureCount = (int) Math.sqrt(tokenizer.getFeatureCount() / 3.);
             /**
             MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                     .seed(0)
@@ -168,11 +183,11 @@ public class Classifier {
                     .setInputType(InputType.convolutional(HEIGHT, WIDTH, featureCount))
                     .build();
             **/
-            model = (ComputationGraph) new ZooModelManager(new int[]{
-                    3,
-                    featureCount,
-                    featureCount
-            }, classesCount).getResNet50();
+            switch (selectedCoreModel) {
+                case RESNET50 -> model = (ComputationGraph) modelManager.getResNet50();
+                case UNET -> model = (ComputationGraph) modelManager.getUNet();
+            }
+
             UIServer uiServer = UIServer.getInstance();
 
             //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
@@ -210,5 +225,9 @@ public class Classifier {
 
     private void test(ComputationGraph model, DataSet dataSet) {
         model.evaluate(dataSet.iterateWithMiniBatches());
+    }
+
+    public void setSelectedCoreModel(CoreModel coreModel) {
+        selectedCoreModel = coreModel;
     }
 }

@@ -39,6 +39,8 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -60,10 +62,15 @@ public class D2VTokenizer extends Tokenizer {
         t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
         try {
+            log.info("Tokenizer: Loading model...");
+            Instant start = Instant.now();
             d2v = WordVectorSerializer.readParagraphVectors(DEFAULT_MODEL_PATH);
+            Instant end = Instant.now();
             d2v.setTokenizerFactory(t);
+            log.info("Tokenizer: Loaded model " + DEFAULT_MODEL_PATH);
+            log.info("Tokenizer: Loaded in " + Duration.between(start, end).getSeconds() + " s");
         } catch (IOException e) {
-            System.out.println("No D2V model found in path " + DEFAULT_MODEL_PATH);
+            log.info("Tokenizer: No D2V model found in path " + DEFAULT_MODEL_PATH);
         }
     }
 
@@ -164,7 +171,7 @@ public class D2VTokenizer extends Tokenizer {
                     vectorTo3dMatrix(tokenizeString(doc.getContent())).reshape(1, 3, side, side),
                     new NDArray(labels)
             ));
-            if (dataSets.size() > 1000) {
+            if (dataSets.size() < -1000) {
                 DataSet.merge(dataSets).save(new File(".\\datasets\\part" + String.valueOf(rowNum++) + ".ds"));
                 dataSets.clear();
                 log.info("Saved " + (rowNum - 1));
@@ -172,7 +179,7 @@ public class D2VTokenizer extends Tokenizer {
         }
         if (dataSets.size() > 1) {
             dataSet = DataSet.merge(dataSets);
-            dataSet.save(new File(".\\datasets\\part" + String.valueOf(rowNum) + ".ds"));
+            //dataSet.save(new File(".\\datasets\\latest.ds"));
         } else {
             dataSet = dataSets.get(0);
         }

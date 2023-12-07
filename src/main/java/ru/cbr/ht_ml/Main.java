@@ -17,9 +17,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        Tokenizer tokenizer = new D2VTokenizer(3072);
+        int side = 64;
+        new ZooModelManager(new int[]{3, side, side}, 8).getUNet();
+        Tokenizer tokenizer = new D2VTokenizer(side * side * 3);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
-        DatasetSeparator separator = new DatasetSeparator(path, "\\.");
+        //DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
@@ -28,7 +30,9 @@ public class Main {
         Classifier classifier = new Classifier(tokenizer);
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
-        classifier.setDataSet(path);
+        //classifier.setDataSet(path);
+        classifier.loadDataSet();
+        classifier.setSelectedCoreModel(Classifier.CoreModel.UNET);
         classifier.train();
         classifier.test();
         if (tokens.equals("null")) {
