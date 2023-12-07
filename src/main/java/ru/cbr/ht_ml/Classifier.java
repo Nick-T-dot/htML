@@ -94,7 +94,7 @@ public class Classifier {
         selectedCoreModel = CoreModel.RESNET50;
         this.tokenizer = tokenizer;
         int featureCount = (int) Math.sqrt(tokenizer.getFeatureCount() / 3.);
-        new ZooModelManager(new int[]{
+        modelManager = new ZooModelManager(new int[]{
                 3,
                 featureCount,
                 featureCount
