@@ -103,7 +103,7 @@ public class Classifier {
         File f = new File(DEFAULT_MODEL_PATH);
         if(f.exists() && !f.isDirectory()) {
             try {
-                model = ComputationGraph.load(new File("..."), true);
+                model = ComputationGraph.load(f, true);
             } catch (IOException e) {
                 System.out.println("Unable to load " + DEFAULT_MODEL_PATH);
             }
