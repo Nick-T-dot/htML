@@ -61,6 +61,9 @@ public class D2VTokenizer extends Tokenizer {
         d2v = null;
         t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
+    }
+
+    public void tryLoadModel() {
         try {
             log.info("Tokenizer: Loading model...");
             Instant start = Instant.now();
@@ -153,6 +156,8 @@ public class D2VTokenizer extends Tokenizer {
     @Override
     public DataSet tokenizeDataset(String path) {
         File datasetDir = new File(path);
+        int fileCount = Arrays.stream(datasetDir.listFiles()).sequential().map(dir ->
+                dir.listFiles().length).reduce(0, Integer::sum);
         LabelAwareIterator iter = new FileLabelAwareIterator.Builder()
                 .addSourceFolder(datasetDir)
                 .build();
@@ -171,11 +176,12 @@ public class D2VTokenizer extends Tokenizer {
                     vectorTo3dMatrix(tokenizeString(doc.getContent())).reshape(1, 3, side, side),
                     new NDArray(labels)
             ));
-            if (dataSets.size() < -1000) {
-                DataSet.merge(dataSets).save(new File(".\\datasets\\part" + String.valueOf(rowNum++) + ".ds"));
-                dataSets.clear();
-                log.info("Saved " + (rowNum - 1));
-            }
+            log.info(++rowNum + "/" + fileCount);
+            //if (dataSets.size() < -1000) {
+            //    DataSet.merge(dataSets).save(new File(".\\datasets\\part" + String.valueOf(rowNum++) + ".ds"));
+            //    dataSets.clear();
+            //    log.info("Saved " + (rowNum - 1));
+            //}
         }
         if (dataSets.size() > 1) {
             dataSet = DataSet.merge(dataSets);

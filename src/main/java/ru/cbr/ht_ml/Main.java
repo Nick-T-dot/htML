@@ -17,8 +17,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        int side = 64;
-        new ZooModelManager(new int[]{3, side, side}, 8).getUNet();
+        int side = 70;
+        new ZooModelManager(new int[]{3, side, side}, 8).getResNet50();
         Tokenizer tokenizer = new D2VTokenizer(side * side * 3);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         //DatasetSeparator separator = new DatasetSeparator(path, "\\.");
@@ -26,18 +26,21 @@ public class Main {
         //tokenizer.train(path);
         tokenizer.evaluate();
         path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
-        String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
-        Classifier classifier = new Classifier(tokenizer);
+        Classifier classifier = Classifier.builder()
+                .dataSet(null)
+                        .coreModel(Classifier.CoreModel.RESNET50)
+                                .featureCount(side * side * 3)
+                .classesCount(8)
+                .tokenizer(tokenizer)
+                                        .build();
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
         //classifier.setDataSet(path);
-        classifier.loadDataSet();
-        classifier.setSelectedCoreModel(Classifier.CoreModel.UNET);
+        //classifier.loadDataSet();
+        //classifier.setSelectedCoreModel(Classifier.CoreModel.RESNET50);
         classifier.train();
         classifier.test();
-        if (tokens.equals("null")) {
-            return;
-        }
+        String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();
         JsParser jsParser = new JsParser();

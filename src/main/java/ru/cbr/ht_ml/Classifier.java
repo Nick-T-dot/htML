@@ -24,6 +24,8 @@ import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
 import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.deeplearning4j.nn.transferlearning.TransferLearningHelper;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.CheckpointListener;
+import org.deeplearning4j.optimize.listeners.EvaluativeListener;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.text.sentenceiterator.FileSentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.LineSentenceIterator;
@@ -61,6 +63,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -71,7 +75,7 @@ import java.util.stream.IntStream;
 public class Classifier {
 
     private static  final int EPOCHS = 1000;
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 10;
     public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
     public static final String DEFAULT_DATASET_PATH = ".\\datasets\\latest.ds";
 
@@ -88,7 +92,7 @@ public class Classifier {
 
     Logger log = Logger.getLogger("Classifier");
 
-    private final Tokenizer tokenizer;
+    private Tokenizer tokenizer;
 
     public Classifier(Tokenizer tokenizer) {
         selectedCoreModel = CoreModel.RESNET50;
@@ -108,6 +112,15 @@ public class Classifier {
                 System.out.println("Unable to load " + DEFAULT_MODEL_PATH);
             }
         }
+    }
+
+    private Classifier(int featureCount, int classesCount) {
+        int side = (int) Math.sqrt(featureCount / 3.);
+        modelManager = new ZooModelManager(new int[]{
+                3,
+                side,
+                side
+        }, classesCount);
     }
 
     public void setDataSet(String path) {
@@ -192,9 +205,16 @@ public class Classifier {
 
             //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
             //Then add the StatsListener to collect this information from the network, as it trains
+            log.info("Writing training stats to " + System.getProperty("java.io.tmpdir"));
             StatsStorage statsStorage = new FileStatsStorage(new File(System.getProperty("java.io.tmpdir"), "ui-stats.dl4j"));
-            int listenerFrequency = 1;
-            model.setListeners(new StatsListener(statsStorage, listenerFrequency));
+            CheckpointListener checkpointListener = new CheckpointListener.Builder("C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models")
+                    .keepLast(2)
+                    .logSaving(true)
+                    .deleteExisting(true)
+                    .build();
+            StatsListener statsListener = new StatsListener(statsStorage, 1);
+            EvaluativeListener evaluativeListener = new EvaluativeListener(testSet.iterateWithMiniBatches(), BATCH_SIZE);
+            model.setListeners(checkpointListener, statsListener, evaluativeListener);
 
             //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
             uiServer.attach(statsStorage);
@@ -208,9 +228,14 @@ public class Classifier {
         net.init();
         log.info("Training...");
         List<DataSet> batches;
+        Instant start ,end;
         for (int i = 1; i < EPOCHS + 1; i++) {
-            batches = dataSet.dataSetBatches(10);
+            log.info("EPOCH " + i + " / " + (EPOCHS));
+            start = Instant.now();
+            batches = dataSet.dataSetBatches(BATCH_SIZE);
             batches.forEach(net::fit);
+            end = Instant.now();
+            log.info("Epoch " + i + " finished in " + Duration.between(start, end).getSeconds() + " s");
         }
         log.info("Saving model...");
         model.save(new File(DEFAULT_MODEL_PATH));
@@ -230,4 +255,59 @@ public class Classifier {
     public void setSelectedCoreModel(CoreModel coreModel) {
         selectedCoreModel = coreModel;
     }
+
+    public static class ClassifierBuilder {
+        private CoreModel model = null;
+        private Tokenizer tokenizer = null;
+        private int featureCount = 0;
+        private int classesCount = 0;
+        String dataSetPath = null;
+        public ClassifierBuilder coreModel(CoreModel model) {
+            this.model = model;
+            return this;
+        }
+
+        public ClassifierBuilder tokenizer(Tokenizer tokenizer) {
+            this.tokenizer = tokenizer;
+            return this;
+        }
+
+        public ClassifierBuilder featureCount(int featureCount) {
+            this.featureCount = featureCount;
+            return this;
+        }
+
+        public ClassifierBuilder classesCount(int classesCount) {
+            this.classesCount = classesCount;
+            return this;
+        }
+
+        public ClassifierBuilder dataSet (String dataSetPath) {
+            this.dataSetPath = dataSetPath;
+            return this;
+        }
+
+        public Classifier build() {
+            Classifier classifier;
+            classifier = new Classifier(featureCount, classesCount);
+            classifier.setTokenizer(tokenizer);
+            classifier.setSelectedCoreModel(model);
+            if (dataSetPath != null) {
+                classifier.setDataSet(dataSetPath);
+            } else {
+                classifier.loadDataSet();
+            }
+            return classifier;
+        }
+    }
+
+    private void setTokenizer(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+    }
+
+    public static ClassifierBuilder builder() {
+        return new ClassifierBuilder();
+    }
+
+
 }
