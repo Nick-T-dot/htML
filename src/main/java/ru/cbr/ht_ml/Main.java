@@ -31,6 +31,7 @@ public class Main {
                         .coreModel(Classifier.CoreModel.RESNET50)
                                 .featureCount(side * side * 3)
                 .classesCount(8)
+                .normalize(true)
                 .tokenizer(tokenizer)
                                         .build();
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
@@ -38,6 +39,7 @@ public class Main {
         //classifier.setDataSet(path);
         //classifier.loadDataSet();
         //classifier.setSelectedCoreModel(Classifier.CoreModel.RESNET50);
+        //classifier.loadModel("C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models\\checkpoint_7_ComputationGraph.zip");
         classifier.train();
         classifier.test();
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));

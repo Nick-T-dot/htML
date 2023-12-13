@@ -177,21 +177,15 @@ public class D2VTokenizer extends Tokenizer {
                     new NDArray(labels)
             ));
             log.info(++rowNum + "/" + fileCount);
-            //if (dataSets.size() < -1000) {
-            //    DataSet.merge(dataSets).save(new File(".\\datasets\\part" + String.valueOf(rowNum++) + ".ds"));
-            //    dataSets.clear();
-            //    log.info("Saved " + (rowNum - 1));
-            //}
         }
         if (dataSets.size() > 1) {
             dataSet = DataSet.merge(dataSets);
-            //dataSet.save(new File(".\\datasets\\latest.ds"));
         } else {
             dataSet = dataSets.get(0);
         }
-        //DataNormalization normalizer = new NormalizerStandardize();
-        //normalizer.fit(dataSet);
-        //normalizer.transform(dataSet);
+        DataNormalization normalizer = new NormalizerStandardize();
+        normalizer.fit(dataSet);
+        normalizer.transform(dataSet);
         return dataSet;
     }
 
