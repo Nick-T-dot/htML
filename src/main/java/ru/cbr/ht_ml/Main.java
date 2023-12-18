@@ -17,14 +17,14 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        DatasetSeparator.csvToFiles("C:\\Users\\Tsvetkov_NK\\Documents\\elements.csv", "C:\\Users\\Tsvetkov_NK\\Documents\\datasets");
+        //DatasetSeparator.csvToFiles("C:\\Users\\Tsvetkov_NK\\Documents\\elements.csv", "C:\\Users\\Tsvetkov_NK\\Documents\\datasets");
         int side = 70;
         new ZooModelManager(new int[]{3, side, side}, 8).getResNet50();
         Tokenizer tokenizer = new D2VTokenizer(side * side * 3);
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
-        //tokenizer.train(path);
+        tokenizer.train(path);
         tokenizer.evaluate();
         path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         Classifier classifier = Classifier.builder()
