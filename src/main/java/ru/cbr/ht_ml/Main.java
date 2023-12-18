@@ -17,11 +17,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
+        DatasetSeparator.csvToFiles("C:\\Users\\Tsvetkov_NK\\Documents\\elements.csv", "C:\\Users\\Tsvetkov_NK\\Documents\\datasets");
         int side = 70;
         new ZooModelManager(new int[]{3, side, side}, 8).getResNet50();
         Tokenizer tokenizer = new D2VTokenizer(side * side * 3);
         String path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
-        //DatasetSeparator separator = new DatasetSeparator(path, "\\.");
+        DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
         //tokenizer.train(path);
         tokenizer.evaluate();
