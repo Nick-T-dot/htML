@@ -116,6 +116,42 @@ public class D2VTokenizer extends Tokenizer {
         }
     }
 
+    @Override
+    public void trainParts(String path) {
+        log.info("Load data....");
+        File baseDir = new File(path);
+        List<File> parts = List.of(baseDir.listFiles());
+        LabelAwareIterator iter;
+        log.info("Fitting Word2Vec model....");
+        for (File part : parts) {
+            log.info("Batch " + part.getName());
+            iter = new FileLabelAwareIterator.Builder()
+                    .addSourceFolder(part)
+                    .build();
+            if (d2v == null) {
+                d2v = new ParagraphVectors.Builder()
+                        .minWordFrequency(1)
+                        .layerSize(featureCount)
+                        .epochs(1)
+                        .iterations(1)
+                        .minLearningRate(0.001)
+                        .useAdaGrad(true)
+                        .trainWordVectors(true)
+                        .stopWords(new ArrayList<String>())
+                        .iterate(iter)
+                        .windowSize(10)
+                        .tokenizerFactory(t)
+                        .build();
+            } else {
+                d2v.setLabelAwareIterator(iter);
+            }
+            d2v.fit();
+        }
+        log.info("Save vectors....");
+        WordVectorSerializer.writeWord2VecModel(d2v, DEFAULT_MODEL_PATH);
+        log.info("Model saved to " + DEFAULT_MODEL_PATH);
+    }
+
     public void evaluate() {
         // todo
     }

@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 public abstract class Tokenizer {
     public abstract void train(String path);
 
+    public abstract void trainParts(String path);
+
     public abstract void evaluate();
 
     public abstract String outputTokenizedFile(String pathToFile);

@@ -9,10 +9,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DatasetSeparator {
@@ -26,7 +25,7 @@ public class DatasetSeparator {
     }
 
     static void csvToFiles(String csvPath, String datasetRootPath) {
-        String[] headers = { "id", "added_by", "context", "coordinates", "project_tc",
+        String[] headers = {"id", "added_by", "context", "coordinates", "project_tc",
                 "screenshot", "styles", "tab_id", "timestamp", "type", "rctikk_uid",
                 "viewport_screenshot", "url_id", "gens", "listeners", "excluded_from_training"};
         String context;
@@ -65,11 +64,80 @@ public class DatasetSeparator {
                 bw.newLine();
                 bw.write(styles);
                 bw.close();
-                System.out.print("\r Processed " + String.valueOf(++lines) + " lines\n");
+                System.out.print("\rProcessed " + String.valueOf(++lines) + " lines\n");
             }
         } catch (IOException e) {
             System.out.println(e.toString());
         }
+    }
+
+    static void subdivideDataSet(String dataSetPath, String outputPath, int maxBatch) {
+        List<String> labels = new ArrayList<>();
+        Map<String, List<String>> files = new HashMap<>();
+        File baseDir = new File(dataSetPath);
+        List<String> temp = new ArrayList<>();
+        try {
+            Stream.of(baseDir.listFiles())
+                    .filter(File::isDirectory)
+                    .forEach(
+                            dir -> {
+                                labels.add(dir.getName());
+                                Stream.of(dir.listFiles())
+                                        .forEach(
+                                                file -> temp.add(file.getPath())
+                                        );
+                                files.put(dir.getName(), new ArrayList<>(temp));
+                                temp.clear();
+                            }
+                    );
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+
+        Set<String> finishedLabels = new HashSet<>();
+        int divide = 0;
+        int index = 0;
+        String divDir, labelDir;
+        FileWriter fw;
+        BufferedWriter bw;
+        BufferedReader br;
+        String filePath, uid;
+        String oldFile;
+        String line;
+        try {
+            while (finishedLabels.size() < labels.size()) {
+                divDir = outputPath + "\\" + baseDir.getName() + "_div_" + String.valueOf(divide);
+                for (int i = 0; i < maxBatch; i++) {
+                    finishedLabels.clear();
+                    for (String label : labels) {
+                        labelDir = divDir + "\\" + label;
+                        if (i== 0) {
+                            Files.createDirectories(Paths.get(labelDir));
+                        }
+                        if (divide * maxBatch + i < files.get(label).size()) {
+                            oldFile = files.get(label).get(divide * maxBatch + i);
+                            uid = oldFile.substring(oldFile.lastIndexOf("\\"));
+                            filePath = String.valueOf(Files.createFile(Paths.get(labelDir + "\\" + uid)));
+                            fw = new FileWriter(filePath, true);
+                            bw = new BufferedWriter(fw);
+                            br = new BufferedReader(new FileReader(oldFile));
+                            bw.write(br.lines().collect(Collectors.joining("\n")));
+                            bw.close();
+                        } else {
+                            finishedLabels.add(label);
+                        }
+                    }
+                    if (finishedLabels.size() < labels.size()) {
+                        break;
+                    }
+                }
+                divide++;
+            }
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
+
+        return;
     }
 
     void separateFiles() {
@@ -101,7 +169,7 @@ public class DatasetSeparator {
                                                 linesCount = 0;
                                             }
                                             if (deleteBaseFile) {
-                                                if(file.delete()) {
+                                                if (file.delete()) {
                                                     System.out.println("Deleted " + file.getName());
                                                 }
                                             }

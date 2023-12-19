@@ -81,6 +81,11 @@ public class W2VTokenizer extends Tokenizer {
         }
     }
 
+    @Override
+    public void trainParts(String path) {
+
+    }
+
     public void evaluate() {
         List<String> words = List.of("man", "day", "deed", "land", "son");
         evaluate(words);
