@@ -83,7 +83,7 @@ import java.util.stream.IntStream;
 
 public class Classifier {
 
-    private static  final int EPOCHS = 1000;
+    private static  final int EPOCHS = 5000;
     private static final int BATCH_SIZE = 250;
     public static final String DEFAULT_MODEL_PATH = ".\\models\\cnn.model";
     public static final String DEFAULT_DATASET_PATH = ".\\datasets\\latest.ds";

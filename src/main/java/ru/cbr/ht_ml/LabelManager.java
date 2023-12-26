@@ -26,7 +26,11 @@ public class LabelManager {
     public double[][] getLabelIndexes(List<String> stringLabels) {
         IntStream.range(0, labels.size()).forEach(i -> core.put(labels.get(i), i));
         double[][] labelIndexes = new double[1][labels.size()];
-        stringLabels.forEach(l -> labelIndexes[0][core.get(l)] = 1.);
+        try {
+            stringLabels.forEach(l -> labelIndexes[0][core.get(l.replace(" ", ""))] = 1.);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         return labelIndexes;
     }
 

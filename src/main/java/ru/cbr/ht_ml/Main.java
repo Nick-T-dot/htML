@@ -17,34 +17,40 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
     public static void main(String[] args) {
-        //DatasetSeparator.csvToFiles("C:\\Users\\Tsvetkov_NK\\Documents\\elements.csv", "C:\\Users\\Tsvetkov_NK\\Documents\\datasets");
-        //DatasetSeparator.subdivideDataSet("C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023",
-        //        "C:\\Users\\Tsvetkov_NK\\Documents\\datasets", 20);
+        //DatasetSeparator.csvToFiles("C:\\Users\\Tsvetkov_NK\\Documents\\elements.csv",
+        //        "C:\\Users\\Tsvetkov_NK\\Documents\\datasets", 50);
+        DatasetSeparator.subdivideDataSet("C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023",
+                "C:\\Users\\Tsvetkov_NK\\Documents\\datasets", 5);
+        //D2VTokenizer.modelToJson("C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models\\d2v_epoch_2.model",
+        //        "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models");
         int side = 70;
         new ZooModelManager(new int[]{3, side, side}, 8).getResNet50();
         Tokenizer tokenizer = new D2VTokenizer(side * side * 3);
-        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023_parts";
+        String path = "C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023";
         DatasetSeparator separator = new DatasetSeparator(path, "\\.");
         //separator.separateFiles(true);
-        tokenizer.trainParts(path);
+        //tokenizer.train(path);
+        tokenizer.tryLoadModel();
         tokenizer.evaluate();
         path = "C:\\Users\\Tsvetkov_NK\\Documents\\labeledt";
         Classifier classifier = Classifier.builder()
                 .dataSet(null)
                         .coreModel(Classifier.CoreModel.RESNET50)
                                 .featureCount(side * side * 3)
-                .classesCount(8)
+                .classesCount(21)
                 .normalize(true)
                 .tokenizer(tokenizer)
                                         .build();
         //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IMDB Dataset.csv";
-        //path = "C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\datasets";
+        path = "C:\\Users\\Tsvetkov_NK\\Documents\\datasets\\DataSet_Mon_Dec_18_08-51-04_MSK_2023";
         //classifier.setDataSet(path);
         //classifier.loadDataSet();
         //classifier.setSelectedCoreModel(Classifier.CoreModel.RESNET50);
-        //classifier.loadModel("C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models\\checkpoint_7_ComputationGraph.zip");
-        //classifier.train();
-        //classifier.test();
+        //
+        classifier.loadDataSet();
+        classifier.loadModel("C:\\Users\\Tsvetkov_NK\\Documents\\IdeaProjects\\MLTest\\models\\cnn.model");
+        classifier.train();
+        classifier.test();
         String tokens = Arrays.toString(tokenizer.tokenizeWord("improve the quality"));
         HtmlParser htmlParser = new HtmlParser();
         CssParser cssParser = new CssParser();

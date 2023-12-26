@@ -39,6 +39,8 @@ import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -123,6 +125,8 @@ public class D2VTokenizer extends Tokenizer {
         List<File> parts = List.of(baseDir.listFiles());
         LabelAwareIterator iter;
         log.info("Fitting Word2Vec model....");
+        int epoch = 0;
+        String savePath;
         for (File part : parts) {
             log.info("Batch " + part.getName());
             iter = new FileLabelAwareIterator.Builder()
@@ -133,9 +137,10 @@ public class D2VTokenizer extends Tokenizer {
                         .minWordFrequency(1)
                         .layerSize(featureCount)
                         .epochs(1)
-                        .iterations(1)
+                        //.iterations(10)
+                        .batchSize(1)
                         .minLearningRate(0.001)
-                        .useAdaGrad(true)
+                        //.useAdaGrad(true)
                         .trainWordVectors(true)
                         .stopWords(new ArrayList<String>())
                         .iterate(iter)
@@ -146,6 +151,10 @@ public class D2VTokenizer extends Tokenizer {
                 d2v.setLabelAwareIterator(iter);
             }
             d2v.fit();
+            log.info("Save epoch " + String.valueOf(++epoch) + "....");
+            savePath = ".\\models\\d2v_epoch_" + epoch + ".model";
+            WordVectorSerializer.writeWord2VecModel(d2v, savePath);
+            log.info("Epoch " + epoch + " saved to " + savePath);
         }
         log.info("Save vectors....");
         WordVectorSerializer.writeWord2VecModel(d2v, DEFAULT_MODEL_PATH);
@@ -192,6 +201,7 @@ public class D2VTokenizer extends Tokenizer {
     @Override
     public DataSet tokenizeDataset(String path) {
         File datasetDir = new File(path);
+        System.out.println(datasetDir.listFiles());
         int fileCount = Arrays.stream(datasetDir.listFiles()).sequential().map(dir ->
                 dir.listFiles().length).reduce(0, Integer::sum);
         LabelAwareIterator iter = new FileLabelAwareIterator.Builder()
@@ -285,4 +295,19 @@ public class D2VTokenizer extends Tokenizer {
     public int getLabelCount(INDArray array) {
         return (int) array.getRow(0).length();
     }
+
+    public static void modelToJson(String path, String outPath) {
+        try {
+            String modelName = path.substring(path.lastIndexOf("\\") + 1, path.lastIndexOf('.'));
+            ParagraphVectors temp = WordVectorSerializer.readParagraphVectors(path);
+            String filePath = String.valueOf(Files.createFile(Paths.get(outPath + "\\" + modelName + ".json")));
+            FileWriter fw = new FileWriter(filePath, true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(temp.toJson());
+            bw.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

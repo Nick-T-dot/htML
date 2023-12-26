@@ -111,7 +111,7 @@ public class DatasetSeparator {
                     finishedLabels.clear();
                     for (String label : labels) {
                         labelDir = divDir + "\\" + label;
-                        if (i== 0) {
+                        if (i == 0) {
                             Files.createDirectories(Paths.get(labelDir));
                         }
                         if (divide * maxBatch + i < files.get(label).size()) {
@@ -121,14 +121,11 @@ public class DatasetSeparator {
                             fw = new FileWriter(filePath, true);
                             bw = new BufferedWriter(fw);
                             br = new BufferedReader(new FileReader(oldFile));
-                            bw.write(br.lines().collect(Collectors.joining("\n")));
+                            bw.write(br.lines().collect(Collectors.joining()));
                             bw.close();
                         } else {
                             finishedLabels.add(label);
                         }
-                    }
-                    if (finishedLabels.size() < labels.size()) {
-                        break;
                     }
                 }
                 divide++;
@@ -136,7 +133,79 @@ public class DatasetSeparator {
         } catch (IOException e) {
             System.out.println(e.toString());
         }
+        return;
+    }
 
+    static void subdivideDataSetCompress(String dataSetPath, String outputPath, int linesPerFile) {
+        List<String> labels = new ArrayList<>();
+        Map<String, List<String>> files = new HashMap<>();
+        File baseDir = new File(dataSetPath);
+        List<String> temp = new ArrayList<>();
+        try {
+            Stream.of(baseDir.listFiles())
+                    .filter(File::isDirectory)
+                    .forEach(
+                            dir -> {
+                                labels.add(dir.getName());
+                                Stream.of(dir.listFiles())
+                                        .forEach(
+                                                file -> temp.add(file.getPath())
+                                        );
+                                files.put(dir.getName(), new ArrayList<>(temp));
+                                temp.clear();
+                            }
+                    );
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+
+        boolean finishedLabel;
+        int divide = 0;
+        int index = 0;
+        String divDir, labelDir;
+        FileWriter fw;
+        BufferedWriter bw = null;
+        BufferedReader br = null;
+        String filePath, uid;
+        String oldFile;
+        String line;
+        try {
+            divDir = outputPath + "\\" + baseDir.getName() + "_compressed";
+            for (String label : labels) {
+                divide = 0;
+                finishedLabel = false;
+                labelDir = divDir + "\\" + label;
+                Files.createDirectories(Paths.get(labelDir));
+                while (!finishedLabel) {
+                    for (int i = 0; i < linesPerFile; i++) {
+                        if (divide * linesPerFile + i < files.get(label).size()) {
+                            oldFile = files.get(label).get(divide * linesPerFile + i);
+                            uid = oldFile.substring(oldFile.lastIndexOf("\\"));
+                            br = new BufferedReader(new FileReader(oldFile));
+                            if (i == 0) {
+                                filePath = String.valueOf(Files.createFile(Paths.get(labelDir + "\\" + uid)));
+                                fw = new FileWriter(filePath, true);
+                                bw = new BufferedWriter(fw);
+                            }
+                            bw.write(br.lines().collect(Collectors.joining()));
+                            if (i < linesPerFile - 1) {
+                                bw.newLine();
+                            }
+                            if (i == linesPerFile - 1) {
+                                bw.close();
+                            }
+                        } else {
+                            finishedLabel = true;
+                            bw.close();
+                            break;
+                        }
+                    }
+                    divide++;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(e.toString());
+        }
         return;
     }
 

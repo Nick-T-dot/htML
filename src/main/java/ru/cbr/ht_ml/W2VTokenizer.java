@@ -34,6 +34,11 @@ public class W2VTokenizer extends Tokenizer {
         }
     }
 
+    @Override
+    public void tryLoadModel() {
+
+    }
+
     public void train(String path) {
         try {
             log.info("Load data....");
